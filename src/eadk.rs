@@ -27,9 +27,12 @@ pub mod display {
     }
 }
 
-use core::panic::PanicInfo;
+pub mod event {
+    pub fn get(timeout: &mut i32) -> u8 {
+        unsafe { eadk_event_get(timeout as *mut i32) }
+    }
 
-#[panic_handler]
-fn panic(_panic: &PanicInfo<'_>) -> ! {
-    loop {}
+    unsafe extern "C" {
+        fn eadk_event_get(timeout: *mut i32) -> u8;
+    }
 }
