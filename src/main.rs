@@ -1,7 +1,9 @@
 #![no_std]
 #![no_main]
 
+use numworks_ereader::app::App;
+
 #[unsafe(no_mangle)]
 pub extern "C" fn main() -> ! {
-    numworks_ereader::app::run()
+    App::new().run()
 }

@@ -30,8 +30,22 @@ impl Rect {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Point {
+    pub x: u16,
+    pub y: u16,
+}
+
+impl Point {
+    pub const fn new(x: u16, y: u16) -> Self {
+        Self { x, y }
+    }
+}
+
 pub mod display {
-    use super::{Color, Rect};
+    use super::{Color, Point, Rect};
+    use core::ffi::CStr;
 
     pub const WIDTH: u16 = 320;
     pub const HEIGHT: u16 = 240;
@@ -46,8 +60,33 @@ pub mod display {
         }
     }
 
+    pub fn draw_string(
+        text: &CStr,
+        point: Point,
+        large_font: bool,
+        text_color: Color,
+        background_color: Color,
+    ) {
+        unsafe {
+            eadk_display_draw_string(
+                text.as_ptr() as *const u8,
+                point,
+                large_font,
+                text_color,
+                background_color,
+            );
+        }
+    }
+
     unsafe extern "C" {
         fn eadk_display_push_rect_uniform(rect: Rect, color: Color);
+        fn eadk_display_draw_string(
+            text: *const u8,
+            point: Point,
+            large_font: bool,
+            text_color: Color,
+            background_color: Color,
+        );
     }
 }
 
