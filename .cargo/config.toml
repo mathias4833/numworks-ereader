@@ -1,6 +1,6 @@
-[build]
-target = "thumbv7em-none-eabihf"
-
 [target.thumbv7em-none-eabihf]
 runner = "npx --yes -- nwlink install-nwa"
 rustflags = ["-C", "link-arg=--relocatable", "-C", "link-arg=-no-gc-sections"]
+
+[alias]
+sim = "run --manifest-path xtask/Cargo.toml"
