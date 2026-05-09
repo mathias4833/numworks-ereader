@@ -5,6 +5,7 @@ use crate::screens::Screen;
 use crate::ui;
 use crate::ui::layout::{Frame, Insets, Stack, SCREEN};
 use crate::ui::widgets::menu::Menu;
+use crate::ui::widgets::status_bar::StatusBar;
 use core::ffi::CStr;
 
 static HOME_ITEMS: [&CStr; 2] = [c"Open reader", c"Settings"];
@@ -29,6 +30,8 @@ impl Screen for HomeScreen {
             .with_padding(Insets::all(16));
 
         ui::draw::fill(Color::WHITE);
+
+        StatusBar::new(c"Numworks Reader").draw(frame.status_bar());
 
         self.menu.draw(Stack::vertical(frame.content(), 45, 4));
     }

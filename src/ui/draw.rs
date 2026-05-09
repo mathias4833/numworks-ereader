@@ -10,8 +10,38 @@ pub fn text(content: &CStr, x: u16, y: u16, color: Color, background: Color) {
     display::draw_string(content, Point::new(x, y), false, color, background);
 }
 
-pub fn title(content: &CStr) {
-    text(content, 8, 8, Color::BLACK, Color::WHITE);
+pub fn large_text(content: &CStr, x: u16, y: u16, color: Color, background: Color) {
+    display::draw_string(content, Point::new(x, y), true, color, background);
+}
+
+pub fn centered_large_text(content: &CStr, x: u16, y: u16, color: Color, background: Color) {
+    let (w, h) = text_size(content, true);
+    large_text(
+        content,
+        x.saturating_sub(w / 2),
+        y.saturating_sub(h / 2),
+        color,
+        background,
+    );
+}
+
+pub fn centered_text(content: &CStr, x: u16, y: u16, color: Color, background: Color) {
+    let (w, h) = text_size(content, false);
+    text(
+        content,
+        x.saturating_sub(w / 2),
+        y.saturating_sub(h / 2),
+        color,
+        background,
+    );
+}
+
+fn text_size(content: &CStr, large_font: bool) -> (u16, u16) {
+    let char_w = if large_font { 10 } else { 7 };
+    let char_h = if large_font { 18 } else { 14 };
+
+    let text_w = content.to_bytes().len() as u16 * char_w;
+    (text_w, char_h)
 }
 
 fn clip_to_screen(area: Rect) -> Option<Rect> {
