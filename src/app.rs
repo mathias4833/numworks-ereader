@@ -1,7 +1,8 @@
 use crate::eadk;
-use crate::screens::home::HomeScreen;
+use crate::eadk::event::Event;
+use crate::screens::home::{HomeAction, HomeScreen};
 use crate::screens::reader::ReaderScreen;
-use crate::screens::{Event, Screen};
+use crate::screens::Screen;
 
 pub enum AppScreen {
     Home(HomeScreen),
@@ -29,12 +30,9 @@ impl App {
         self.draw();
 
         loop {
-            let mut timeout = 20;
-            eadk::event::get(&mut timeout);
-
-            let event = Event::None; // TODO: Implement
-
-            if self.handle_event(event) {
+            if let Some(event) = eadk::event::wait_event()
+                && self.handle_event(event)
+            {
                 self.draw();
             }
         }
@@ -42,7 +40,13 @@ impl App {
 
     fn handle_event(&mut self, event: Event) -> bool {
         match &mut self.screen {
-            AppScreen::Home(screen) => screen.handle_event(event).is_some(),
+            AppScreen::Home(screen) => match screen.handle_event(event) {
+                Some(HomeAction::OpenReader) => {
+                    self.screen = AppScreen::Reader(ReaderScreen::new());
+                    true
+                }
+                None => false,
+            },
             AppScreen::Reader(screen) => screen.handle_event(event).is_some(),
         }
     }

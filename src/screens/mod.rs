@@ -1,10 +1,7 @@
+use crate::eadk::event::Event;
+
 pub mod home;
 pub mod reader;
-
-pub enum Event {
-    Ok,
-    None,
-} // TODO: Implement
 
 pub trait Screen {
     type Action;

@@ -1,6 +1,7 @@
 use crate::eadk;
-use crate::eadk::{Color, Point, Rect};
-use crate::screens::{Event, Screen};
+use crate::eadk::display::{Color, Point, Rect};
+use crate::eadk::event::Event;
+use crate::screens::Screen;
 
 pub enum HomeAction {
     OpenReader,
