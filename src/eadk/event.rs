@@ -139,9 +139,9 @@ pub enum Event {
     Idle = 223,
 }
 
-pub fn wait_event() -> Event {
+pub fn wait_event(timeout: i32) -> Event {
     loop {
-        let mut timeout = 20;
+        let mut timeout = timeout;
         let raw = get(&mut timeout);
 
         if let Ok(event) = Event::try_from(raw) {

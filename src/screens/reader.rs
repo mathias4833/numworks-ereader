@@ -1,7 +1,7 @@
 use crate::app::AppAction;
 use crate::eadk;
 use crate::eadk::display::{Color, Point};
-use crate::screens::{Event, Screen};
+use crate::screens::{DrawContext, Event, Screen};
 
 pub struct ReaderScreen {}
 
@@ -12,7 +12,7 @@ impl ReaderScreen {
 }
 
 impl Screen for ReaderScreen {
-    fn draw(&self) {
+    fn draw(&self, ctx: DrawContext<'_>) {
         eadk::display::draw_string(
             c"Reader!",
             Point::new(100, 100),

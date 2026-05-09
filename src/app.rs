@@ -2,7 +2,10 @@ use crate::eadk;
 use crate::eadk::event::Event;
 use crate::screens::home::HomeScreen;
 use crate::screens::reader::ReaderScreen;
-use crate::screens::Screen;
+use crate::screens::{DrawContext, Screen};
+use crate::ui::widgets::battery_indicator::BatteryIndicator;
+
+const EVENT_TIMEOUT_MS: i32 = 60_000;
 
 pub enum AppScreen {
     Home(HomeScreen),
@@ -18,6 +21,7 @@ pub enum AppAction {
 
 pub struct App {
     screen: AppScreen,
+    battery: BatteryIndicator,
 }
 
 impl Default for App {
@@ -30,17 +34,31 @@ impl App {
     pub fn new() -> Self {
         Self {
             screen: AppScreen::Home(HomeScreen::new()),
+            battery: BatteryIndicator::new(),
         }
     }
 
     pub fn run(&mut self) -> ! {
+        self.battery
+            .update_if_needed(eadk::timing::millis(), Event::None);
         self.draw();
 
         loop {
-            let event = eadk::event::wait_event();
+            let event = eadk::event::wait_event(EVENT_TIMEOUT_MS);
+            let now = eadk::timing::millis();
 
-            let action = self.current_screen_handle_event(event);
-            self.handle_action(action);
+            let battery_changed = self.battery.update_if_needed(now, event);
+
+            let action = match event {
+                Event::None | Event::Idle => AppAction::None,
+                Event::BatteryCharging | Event::USBPlug => AppAction::Redraw,
+                _ => self.current_screen_handle_event(event),
+            };
+            let needs_redraw = self.handle_action(action);
+
+            if battery_changed || needs_redraw {
+                self.draw();
+            }
         }
     }
 
@@ -51,30 +69,33 @@ impl App {
         }
     }
 
-    fn handle_action(&mut self, action: AppAction) {
+    /// Returns `true` if the screen needs to be redrawn.
+    fn handle_action(&mut self, action: AppAction) -> bool {
         match action {
-            AppAction::None => {}
+            AppAction::None => false,
 
-            AppAction::Redraw => {
-                self.draw();
-            }
+            AppAction::Redraw => true,
 
             AppAction::OpenReader => {
                 self.screen = AppScreen::Reader(ReaderScreen::new());
-                self.draw();
+                true
             }
 
             AppAction::GoHome => {
                 self.screen = AppScreen::Home(HomeScreen::new());
-                self.draw();
+                true
             }
         }
     }
 
     fn draw(&self) {
+        let ctx = DrawContext {
+            battery: &self.battery,
+        };
+
         match &self.screen {
-            AppScreen::Home(screen) => screen.draw(),
-            AppScreen::Reader(screen) => screen.draw(),
+            AppScreen::Home(screen) => screen.draw(ctx),
+            AppScreen::Reader(screen) => screen.draw(ctx),
         }
     }
 }

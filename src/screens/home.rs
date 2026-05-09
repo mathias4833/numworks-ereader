@@ -1,7 +1,7 @@
 use crate::app::AppAction;
 use crate::eadk::display::Color;
 use crate::eadk::event::Event;
-use crate::screens::Screen;
+use crate::screens::{DrawContext, Screen};
 use crate::ui;
 use crate::ui::layout::{Frame, Insets, Stack, SCREEN};
 use crate::ui::widgets::menu::Menu;
@@ -23,7 +23,7 @@ impl HomeScreen {
 }
 
 impl Screen for HomeScreen {
-    fn draw(&self) {
+    fn draw(&self, ctx: DrawContext<'_>) {
         let frame = Frame::new(SCREEN)
             .with_status_bar(24)
             .with_bottom_bar(24)
