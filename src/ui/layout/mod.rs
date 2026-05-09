@@ -1,7 +1,9 @@
+mod frame;
 mod insets;
 mod stack;
 
 use crate::eadk::display::{Rect, DISPLAY_HEIGHT, DISPLAY_WIDTH};
+pub use frame::Frame;
 pub use insets::Insets;
 pub use stack::Stack;
 

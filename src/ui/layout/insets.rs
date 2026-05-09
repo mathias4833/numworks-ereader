@@ -1,5 +1,6 @@
 use crate::eadk::display::Rect;
 
+#[derive(Copy, Clone)]
 pub struct Insets {
     pub left: u16,
     pub right: u16,
@@ -8,6 +9,8 @@ pub struct Insets {
 }
 
 impl Insets {
+    pub const ZERO: Self = Self::new(0, 0, 0, 0);
+
     pub const fn new(left: u16, right: u16, top: u16, bottom: u16) -> Self {
         Self {
             left,

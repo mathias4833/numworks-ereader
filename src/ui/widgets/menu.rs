@@ -6,16 +6,11 @@ use core::ffi::CStr;
 pub struct Menu<'a> {
     items: &'a [&'a CStr],
     selected: usize,
-    layout: Stack,
 }
 
 impl<'a> Menu<'a> {
-    pub const fn new(items: &'a [&'a CStr], layout: Stack) -> Self {
-        Self {
-            items,
-            selected: 0,
-            layout,
-        }
+    pub const fn new(items: &'a [&'a CStr]) -> Self {
+        Self { items, selected: 0 }
     }
 
     pub fn selected(&self) -> usize {
@@ -32,9 +27,9 @@ impl<'a> Menu<'a> {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, layout: Stack) {
         for (index, item) in self.items.iter().enumerate() {
-            let Some(area) = self.layout.item_rect(index) else {
+            let Some(area) = layout.item_rect(index) else {
                 continue;
             };
             let selected = index == self.selected;
