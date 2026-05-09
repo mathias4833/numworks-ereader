@@ -1,11 +1,8 @@
+use crate::app::AppAction;
 use crate::eadk;
 use crate::eadk::display::{Color, Point, Rect};
 use crate::eadk::event::Event;
 use crate::screens::Screen;
-
-pub enum HomeAction {
-    OpenReader,
-}
 
 #[derive(Default)]
 pub struct HomeScreen {}
@@ -17,8 +14,6 @@ impl HomeScreen {
 }
 
 impl Screen for HomeScreen {
-    type Action = HomeAction;
-
     fn draw(&self) {
         eadk::display::fill_screen(Color::WHITE);
 
@@ -33,10 +28,10 @@ impl Screen for HomeScreen {
         );
     }
 
-    fn handle_event(&mut self, event: Event) -> Option<Self::Action> {
+    fn handle_event(&mut self, event: Event) -> AppAction {
         match event {
-            Event::Ok => Some(HomeAction::OpenReader),
-            _ => None,
+            Event::Ok => AppAction::OpenReader,
+            _ => AppAction::None,
         }
     }
 }

@@ -1,8 +1,7 @@
+use crate::app::AppAction;
 use crate::eadk;
 use crate::eadk::display::{Color, Point};
 use crate::screens::{Event, Screen};
-
-pub enum ReaderAction {}
 
 pub struct ReaderScreen {}
 
@@ -13,8 +12,6 @@ impl ReaderScreen {
 }
 
 impl Screen for ReaderScreen {
-    type Action = ReaderAction;
-
     fn draw(&self) {
         eadk::display::draw_string(
             c"Reader!",
@@ -25,7 +22,10 @@ impl Screen for ReaderScreen {
         );
     }
 
-    fn handle_event(&mut self, _event: Event) -> Option<Self::Action> {
-        None
+    fn handle_event(&mut self, event: Event) -> AppAction {
+        match event {
+            Event::Back => AppAction::GoHome,
+            _ => AppAction::None,
+        }
     }
 }

@@ -139,10 +139,15 @@ pub enum Event {
     Idle = 223,
 }
 
-pub fn wait_event() -> Option<Event> {
-    let mut timeout = 20;
-    let raw = get(&mut timeout);
-    Event::try_from(raw).ok()
+pub fn wait_event() -> Event {
+    loop {
+        let mut timeout = 20;
+        let raw = get(&mut timeout);
+
+        if let Ok(event) = Event::try_from(raw) {
+            return event;
+        }
+    }
 }
 
 fn get(timeout: &mut i32) -> u16 {

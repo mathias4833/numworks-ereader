@@ -1,12 +1,19 @@
 use crate::eadk;
 use crate::eadk::event::Event;
-use crate::screens::home::{HomeAction, HomeScreen};
+use crate::screens::home::HomeScreen;
 use crate::screens::reader::ReaderScreen;
 use crate::screens::Screen;
 
 pub enum AppScreen {
     Home(HomeScreen),
     Reader(ReaderScreen),
+}
+
+pub enum AppAction {
+    None,
+    Redraw,
+    OpenReader,
+    GoHome,
 }
 
 pub struct App {
@@ -30,24 +37,37 @@ impl App {
         self.draw();
 
         loop {
-            if let Some(event) = eadk::event::wait_event()
-                && self.handle_event(event)
-            {
-                self.draw();
-            }
+            let event = eadk::event::wait_event();
+
+            let action = self.current_screen_handle_event(event);
+            self.handle_action(action);
         }
     }
 
-    fn handle_event(&mut self, event: Event) -> bool {
+    fn current_screen_handle_event(&mut self, event: Event) -> AppAction {
         match &mut self.screen {
-            AppScreen::Home(screen) => match screen.handle_event(event) {
-                Some(HomeAction::OpenReader) => {
-                    self.screen = AppScreen::Reader(ReaderScreen::new());
-                    true
-                }
-                None => false,
-            },
-            AppScreen::Reader(screen) => screen.handle_event(event).is_some(),
+            AppScreen::Home(screen) => screen.handle_event(event),
+            AppScreen::Reader(screen) => screen.handle_event(event),
+        }
+    }
+
+    fn handle_action(&mut self, action: AppAction) {
+        match action {
+            AppAction::None => {}
+
+            AppAction::Redraw => {
+                self.draw();
+            }
+
+            AppAction::OpenReader => {
+                self.screen = AppScreen::Reader(ReaderScreen::new());
+                self.draw();
+            }
+
+            AppAction::GoHome => {
+                self.screen = AppScreen::Home(HomeScreen::new());
+                self.draw();
+            }
         }
     }
 
