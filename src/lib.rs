@@ -6,6 +6,7 @@ pub mod app;
 pub mod eadk;
 mod metadata;
 mod screens;
+mod ui;
 
 #[cfg(target_os = "none")]
 mod panic;

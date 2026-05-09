@@ -30,6 +30,24 @@ impl Rect {
             height,
         }
     }
+
+    pub const fn left(self) -> u16 {
+        self.x
+    }
+
+    pub const fn top(self) -> u16 {
+        self.y
+    }
+
+    // Exclusive bounds, last covered x coordinate is right() - 1
+    pub const fn right(self) -> u16 {
+        self.x.saturating_add(self.width)
+    }
+
+    // Exclusive bounds, last covered y coordinate is bottom() - 1
+    pub const fn bottom(self) -> u16 {
+        self.y.saturating_add(self.height)
+    }
 }
 
 #[repr(C)]
@@ -45,12 +63,8 @@ impl Point {
     }
 }
 
-pub const WIDTH: u16 = 320;
-pub const HEIGHT: u16 = 240;
-
-pub fn fill_screen(color: Color) {
-    push_rect_uniform(Rect::new(0, 0, WIDTH, HEIGHT), color);
-}
+pub const DISPLAY_WIDTH: u16 = 320;
+pub const DISPLAY_HEIGHT: u16 = 240;
 
 pub fn push_rect_uniform(rect: Rect, color: Color) {
     unsafe {

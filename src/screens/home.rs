@@ -1,36 +1,54 @@
 use crate::app::AppAction;
-use crate::eadk;
-use crate::eadk::display::{Color, Point, Rect};
+use crate::eadk::display::{Color, Rect};
 use crate::eadk::event::Event;
 use crate::screens::Screen;
+use crate::ui;
+use crate::ui::layout::{Insets, Stack, SCREEN};
+use crate::ui::widgets::menu::Menu;
+use core::ffi::CStr;
 
-#[derive(Default)]
-pub struct HomeScreen {}
+static HOME_ITEMS: [&CStr; 2] = [c"Open reader", c"Settings"];
+pub const CONTENT: Rect = Insets::new(16, 48, 16, 16).apply(SCREEN);
+const HOME_MENU_LAYOUT: Stack = Stack::vertical(CONTENT, 26, 4);
+
+pub struct HomeScreen {
+    menu: Menu<'static>,
+}
 
 impl HomeScreen {
     pub const fn new() -> Self {
-        Self {}
+        Self {
+            menu: Menu::new(&HOME_ITEMS, HOME_MENU_LAYOUT),
+        }
     }
 }
 
 impl Screen for HomeScreen {
     fn draw(&self) {
-        eadk::display::fill_screen(Color::WHITE);
+        ui::draw::fill(Color::WHITE);
+        ui::draw::title(c"NumWorks Reader");
 
-        eadk::display::push_rect_uniform(Rect::new(40, 40, 240, 160), Color::RED);
-
-        eadk::display::draw_string(
-            c"Hello World!",
-            Point::new(100, 100),
-            false,
-            Color::BLACK,
-            Color::WHITE,
-        );
+        self.menu.draw();
     }
 
     fn handle_event(&mut self, event: Event) -> AppAction {
         match event {
-            Event::Ok => AppAction::OpenReader,
+            Event::Up => {
+                self.menu.move_up();
+                AppAction::Redraw
+            }
+
+            Event::Down => {
+                self.menu.move_down();
+                AppAction::Redraw
+            }
+
+            Event::Ok => match self.menu.selected() {
+                0 => AppAction::OpenReader,
+                1 => AppAction::None, // TODO: Settings
+                _ => AppAction::None,
+            },
+
             _ => AppAction::None,
         }
     }
