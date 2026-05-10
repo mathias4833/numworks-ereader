@@ -17,14 +17,20 @@ impl<'a> Menu<'a> {
         self.selected
     }
 
-    pub fn move_up(&mut self) {
+    pub fn move_up(&mut self) -> bool {
+        let previous = self.selected;
         self.selected = self.selected.saturating_sub(1);
+        self.selected != previous
     }
 
-    pub fn move_down(&mut self) {
-        if !self.items.is_empty() {
-            self.selected = (self.selected + 1).min(self.items.len() - 1);
+    pub fn move_down(&mut self) -> bool {
+        if self.items.is_empty() {
+            return false;
         }
+
+        let previous = self.selected;
+        self.selected = (self.selected + 1).min(self.items.len() - 1);
+        self.selected != previous
     }
 
     pub fn draw(&self, layout: Stack) {

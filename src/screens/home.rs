@@ -38,15 +38,9 @@ impl Screen for HomeScreen {
 
     fn handle_event(&mut self, event: Event) -> AppAction {
         match event {
-            Event::Up => {
-                self.menu.move_up();
-                AppAction::Redraw
-            }
+            Event::Up => AppAction::redraw_if(self.menu.move_up()),
 
-            Event::Down => {
-                self.menu.move_down();
-                AppAction::Redraw
-            }
+            Event::Down => AppAction::redraw_if(self.menu.move_down()),
 
             Event::Ok => match self.menu.selected() {
                 0 => AppAction::OpenReader,

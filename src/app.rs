@@ -19,6 +19,12 @@ pub enum AppAction {
     GoHome,
 }
 
+impl AppAction {
+    pub const fn redraw_if(cond: bool) -> Self {
+        if cond { Self::Redraw } else { Self::None }
+    }
+}
+
 pub struct App {
     screen: AppScreen,
     battery: BatteryIndicator,
