@@ -6,7 +6,7 @@ use crate::geometry::{Rect, Size};
 use crate::ui::draw;
 use crate::ui::layout::Insets;
 
-const BATTERY_REFRESH_MS: u64 = 60_000;
+const BATTERY_REFRESH_MS: u64 = 1000;
 
 pub struct BatteryIndicator {
     level: Option<BatteryLevel>,
@@ -55,6 +55,9 @@ impl BatteryIndicator {
         self.draw_fill(area, level);
         self.draw_body(area);
         self.draw_nub(area);
+        if self.charging {
+            self.draw_charging(area);
+        }
     }
 
     fn draw_fill(&self, area: Rect, level: BatteryLevel) {
@@ -74,6 +77,28 @@ impl BatteryIndicator {
         let body = Self::body(area);
         draw::rect(
             Rect::new(body.right(), body.y + body.height / 4, 2, body.height / 2),
+            Color::BLACK,
+        );
+    }
+
+    fn draw_charging(&self, area: Rect) {
+        let inner = Self::inner(area);
+        let center_x = inner.x + inner.width / 2;
+        let center_y = inner.y + inner.height / 2;
+
+        let length = inner.height.saturating_sub(2);
+
+        draw::rect(
+            Rect::new(
+                center_x.saturating_sub(1),
+                inner.y.saturating_add(1),
+                2,
+                length,
+            ),
+            Color::BLACK,
+        );
+        draw::rect(
+            Rect::new(center_x.saturating_sub(length / 2), center_y - 1, length, 2),
             Color::BLACK,
         );
     }

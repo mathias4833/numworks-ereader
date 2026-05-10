@@ -5,7 +5,7 @@ use crate::screens::reader::ReaderScreen;
 use crate::screens::{DrawContext, Screen};
 use crate::ui::widgets::battery_indicator::BatteryIndicator;
 
-const EVENT_TIMEOUT_MS: i32 = 60_000;
+const EVENT_TIMEOUT_MS: i32 = 1000;
 
 pub enum AppScreen {
     Home(HomeScreen),

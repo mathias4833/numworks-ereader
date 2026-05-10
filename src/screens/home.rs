@@ -27,7 +27,7 @@ impl Screen for HomeScreen {
         let frame = Frame::new(SCREEN)
             .with_status_bar(24)
             .with_bottom_bar(24)
-            .with_padding(Insets::all(16));
+            .with_padding(Insets::all(4));
 
         ui::draw::fill(Color::WHITE);
 
