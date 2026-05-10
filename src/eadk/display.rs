@@ -1,3 +1,4 @@
+use crate::geometry::{Point, Rect};
 use core::ffi::CStr;
 
 #[repr(transparent)]
@@ -10,66 +11,9 @@ impl Color {
     pub const BLACK: Self = Self { rgb565: 0x0000 };
     pub const WHITE: Self = Self { rgb565: 0xffff };
     pub const RED: Self = Self { rgb565: 0xf800 };
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Rect {
-    pub x: u16,
-    pub y: u16,
-    pub width: u16,
-    pub height: u16,
-}
-
-impl Rect {
-    pub const fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
-    }
-
-    pub const fn from_edges(left: u16, top: u16, right: u16, bottom: u16) -> Self {
-        Self {
-            x: left,
-            y: top,
-            width: right.saturating_sub(left),
-            height: bottom.saturating_sub(top),
-        }
-    }
-
-    pub const fn left(self) -> u16 {
-        self.x
-    }
-
-    pub const fn top(self) -> u16 {
-        self.y
-    }
-
-    // Exclusive bounds, last covered x coordinate is right() - 1
-    pub const fn right(self) -> u16 {
-        self.x.saturating_add(self.width)
-    }
-
-    // Exclusive bounds, last covered y coordinate is bottom() - 1
-    pub const fn bottom(self) -> u16 {
-        self.y.saturating_add(self.height)
-    }
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Point {
-    pub x: u16,
-    pub y: u16,
-}
-
-impl Point {
-    pub const fn new(x: u16, y: u16) -> Self {
-        Self { x, y }
-    }
+    pub const GRAY: Self = Self { rgb565: 0x8410 };
+    pub const GREEN: Self = Self { rgb565: 0x05e0 };
+    pub const ORANGE: Self = Self { rgb565: 0xfd20 };
 }
 
 pub const DISPLAY_WIDTH: u16 = 320;

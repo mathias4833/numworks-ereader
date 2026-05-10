@@ -1,4 +1,4 @@
-use crate::eadk::display::Rect;
+use crate::geometry::Rect;
 use crate::ui::layout::Insets;
 
 #[derive(Clone, Copy)]

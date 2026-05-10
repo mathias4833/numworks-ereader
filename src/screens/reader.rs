@@ -1,6 +1,7 @@
 use crate::app::AppAction;
 use crate::eadk;
-use crate::eadk::display::{Color, Point};
+use crate::eadk::display::Color;
+use crate::geometry::Point;
 use crate::screens::{DrawContext, Event, Screen};
 
 pub struct ReaderScreen {}

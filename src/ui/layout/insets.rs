@@ -1,4 +1,4 @@
-use crate::eadk::display::Rect;
+use crate::geometry::Rect;
 
 #[derive(Copy, Clone)]
 pub struct Insets {

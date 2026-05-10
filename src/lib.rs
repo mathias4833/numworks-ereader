@@ -4,6 +4,7 @@ use crate::app::App;
 
 pub mod app;
 pub mod eadk;
+pub mod geometry;
 mod metadata;
 mod screens;
 mod ui;

@@ -1,5 +1,6 @@
 use crate::eadk::display;
-use crate::eadk::display::{Color, Point, Rect, DISPLAY_HEIGHT, DISPLAY_WIDTH};
+use crate::eadk::display::{Color, DISPLAY_HEIGHT, DISPLAY_WIDTH};
+use crate::geometry::{Point, Rect};
 use core::ffi::CStr;
 
 pub fn fill(color: Color) {

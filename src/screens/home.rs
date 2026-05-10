@@ -31,7 +31,9 @@ impl Screen for HomeScreen {
 
         ui::draw::fill(Color::WHITE);
 
-        StatusBar::new(c"Numworks Reader").draw(frame.status_bar());
+        StatusBar::new(c"Numworks Reader")
+            .with_battery(ctx.battery)
+            .draw(frame.status_bar());
 
         self.menu.draw(Stack::vertical(frame.content(), 45, 4));
     }
