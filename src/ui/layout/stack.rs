@@ -1,4 +1,5 @@
-use crate::geometry::Rect;
+use embedded_graphics::prelude::*;
+use embedded_graphics::primitives::Rectangle;
 
 #[derive(Clone, Copy)]
 pub enum StackDirection {
@@ -8,14 +9,14 @@ pub enum StackDirection {
 
 #[derive(Clone, Copy)]
 pub struct Stack {
-    pub area: Rect,
+    pub area: Rectangle,
     pub direction: StackDirection,
-    pub item_size: u16,
-    pub gap: u16,
+    pub item_size: u32,
+    pub gap: u32,
 }
 
 impl Stack {
-    pub const fn vertical(area: Rect, item_height: u16, gap: u16) -> Self {
+    pub const fn vertical(area: Rectangle, item_height: u32, gap: u32) -> Self {
         Self {
             area,
             direction: StackDirection::Vertical,
@@ -24,7 +25,7 @@ impl Stack {
         }
     }
 
-    pub const fn horizontal(area: Rect, item_width: u16, gap: u16) -> Self {
+    pub const fn horizontal(area: Rectangle, item_width: u32, gap: u32) -> Self {
         Self {
             area,
             direction: StackDirection::Horizontal,
@@ -33,38 +34,23 @@ impl Stack {
         }
     }
 
-    pub const fn item_rect(&self, index: usize) -> Option<Rect> {
+    pub fn item_rect(&self, index: usize) -> Option<Rectangle> {
         let step = self.item_size.saturating_add(self.gap);
-        let offset = (index as u16).saturating_mul(step);
+        let offset = (index as u32).saturating_mul(step);
 
         let rect = match self.direction {
-            StackDirection::Vertical => Rect::new(
-                self.area.x,
-                self.area.y.saturating_add(offset),
-                self.area.width,
-                self.item_size,
+            StackDirection::Vertical => Rectangle::new(
+                self.area.top_left + Point::new(0, offset as i32),
+                Size::new(self.area.size.width, self.item_size),
             ),
-
-            StackDirection::Horizontal => Rect::new(
-                self.area.x.saturating_add(offset),
-                self.area.y,
-                self.item_size,
-                self.area.height,
+            StackDirection::Horizontal => Rectangle::new(
+                self.area.top_left + Point::new(offset as i32, 0),
+                Size::new(self.item_size, self.area.size.height),
             ),
         };
 
-        match self.direction {
-            StackDirection::Vertical => {
-                if rect.bottom() > self.area.bottom() {
-                    return None;
-                }
-            }
-
-            StackDirection::Horizontal => {
-                if rect.right() > self.area.right() {
-                    return None;
-                }
-            }
+        if self.area.intersection(&rect) != self.area {
+            return None;
         }
 
         Some(rect)
@@ -82,8 +68,8 @@ impl Stack {
         }
 
         let available = match self.direction {
-            StackDirection::Vertical => self.area.height,
-            StackDirection::Horizontal => self.area.width,
+            StackDirection::Vertical => self.area.size.height,
+            StackDirection::Horizontal => self.area.size.width,
         };
 
         let total = available.saturating_add(self.gap);

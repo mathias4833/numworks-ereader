@@ -1,16 +1,17 @@
-use crate::geometry::Rect;
 use crate::ui::layout::Insets;
+use embedded_graphics::prelude::*;
+use embedded_graphics::primitives::Rectangle;
 
 #[derive(Clone, Copy)]
 pub struct Frame {
-    screen: Rect,
-    status_bar_height: u16,
-    bottom_bar_height: u16,
+    screen: Rectangle,
+    status_bar_height: u32,
+    bottom_bar_height: u32,
     padding: Insets,
 }
 
 impl Frame {
-    pub const fn new(screen: Rect) -> Self {
+    pub const fn new(screen: Rectangle) -> Self {
         Self {
             screen,
             status_bar_height: 0,
@@ -19,12 +20,12 @@ impl Frame {
         }
     }
 
-    pub const fn with_status_bar(mut self, height: u16) -> Self {
+    pub const fn with_status_bar(mut self, height: u32) -> Self {
         self.status_bar_height = height;
         self
     }
 
-    pub const fn with_bottom_bar(mut self, height: u16) -> Self {
+    pub const fn with_bottom_bar(mut self, height: u32) -> Self {
         self.bottom_bar_height = height;
         self
     }
@@ -34,34 +35,38 @@ impl Frame {
         self
     }
 
-    pub const fn status_bar(&self) -> Rect {
-        Rect::new(
-            self.screen.x,
-            self.screen.y,
-            self.screen.width,
-            self.status_bar_height,
+    pub fn status_bar(&self) -> Rectangle {
+        Rectangle::new(
+            self.screen.top_left,
+            Size::new(self.screen.size.width, self.status_bar_height),
         )
     }
 
-    pub const fn bottom_bar(&self) -> Rect {
-        Rect::new(
-            self.screen.x,
-            self.screen.bottom().saturating_sub(self.bottom_bar_height),
-            self.screen.width,
-            self.bottom_bar_height,
+    pub fn bottom_bar(&self) -> Rectangle {
+        Rectangle::new(
+            Point::new(
+                self.screen.top_left.x,
+                self.screen.top_left.y + self.screen.size.height as i32
+                    - self.bottom_bar_height as i32,
+            ),
+            Size::new(self.screen.size.width, self.bottom_bar_height),
         )
     }
 
-    pub const fn body(&self) -> Rect {
-        Rect::from_edges(
-            self.screen.left(),
-            self.status_bar().bottom(),
-            self.screen.right(),
-            self.bottom_bar().top(),
+    pub fn body(&self) -> Rectangle {
+        Rectangle::new(
+            self.screen.top_left + Point::new(0, self.status_bar_height as i32),
+            Size::new(
+                self.screen.size.width,
+                self.screen
+                    .size
+                    .height
+                    .saturating_sub(self.status_bar_height + self.bottom_bar_height),
+            ),
         )
     }
 
-    pub const fn content(&self) -> Rect {
+    pub fn content(&self) -> Rectangle {
         self.padding.apply(self.body())
     }
 }

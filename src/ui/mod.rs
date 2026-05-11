@@ -1,4 +1,3 @@
-mod display;
-pub mod draw;
+pub mod components;
+pub mod display;
 pub mod layout;
-pub mod widgets;

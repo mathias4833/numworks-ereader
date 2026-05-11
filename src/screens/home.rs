@@ -1,14 +1,14 @@
 use crate::app::AppAction;
-use crate::eadk::display::Color;
 use crate::eadk::event::Event;
 use crate::screens::{DrawContext, Screen};
-use crate::ui;
+use crate::ui::components::menu::Menu;
+use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, Stack, SCREEN};
-use crate::ui::widgets::menu::Menu;
-use crate::ui::widgets::status_bar::StatusBar;
-use core::ffi::CStr;
+use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::*;
+use embedded_graphics::primitives::PrimitiveStyle;
 
-static HOME_ITEMS: [&CStr; 2] = [c"Open reader", c"Settings"];
+static HOME_ITEMS: [&str; 2] = ["Open reader", "Settings"];
 
 pub struct HomeScreen {
     menu: Menu<'static>,
@@ -23,19 +23,28 @@ impl HomeScreen {
 }
 
 impl Screen for HomeScreen {
-    fn draw(&self, ctx: DrawContext<'_>) {
+    fn draw<D>(&self, display: &mut D, ctx: DrawContext<'_>) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = Rgb565>,
+    {
         let frame = Frame::new(SCREEN)
             .with_status_bar(24)
             .with_bottom_bar(24)
             .with_padding(Insets::all(4));
 
-        ui::draw::fill(Color::WHITE);
+        SCREEN
+            .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
+            .draw(display)?;
 
-        StatusBar::new(c"Numworks Reader")
+        StatusBar::new(frame.status_bar(), "Numworks Reader")
             .with_battery(ctx.battery)
-            .draw(frame.status_bar());
+            .draw(display)?;
 
-        self.menu.draw(Stack::vertical(frame.content(), 45, 4));
+        self.menu
+            .view(Stack::vertical(frame.content(), 45, 4))
+            .draw(display)?;
+
+        Ok(())
     }
 
     fn handle_event(&mut self, event: Event) -> AppAction {
