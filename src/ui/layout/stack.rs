@@ -49,7 +49,7 @@ impl Stack {
             ),
         };
 
-        if self.area.intersection(&rect) != self.area {
+        if self.area.intersection(&rect) != rect {
             return None;
         }
 

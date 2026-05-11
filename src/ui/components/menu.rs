@@ -5,7 +5,7 @@ use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
-use embedded_graphics::text::{Alignment, Text};
+use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use embedded_graphics::Drawable;
 
 pub struct Menu<'a> {
@@ -77,11 +77,14 @@ impl Drawable for MenuView<'_, '_> {
                 .into_styled(PrimitiveStyle::with_fill(background))
                 .draw(display)?;
 
-            Text::with_alignment(
+            Text::with_text_style(
                 item,
                 area.top_left + Point::new(8, 6),
                 MonoTextStyle::new(&FONT_7X14, foreground),
-                Alignment::Left,
+                TextStyleBuilder::new()
+                    .alignment(Alignment::Left)
+                    .baseline(Baseline::Middle)
+                    .build(),
             )
             .draw(display)?;
         }
