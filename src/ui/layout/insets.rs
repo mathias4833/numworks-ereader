@@ -1,43 +1,53 @@
-use crate::geometry::Rect;
+use embedded_graphics::{prelude::*, primitives::Rectangle};
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Insets {
-    pub left: u16,
-    pub right: u16,
-    pub top: u16,
-    pub bottom: u16,
+    pub top: u32,
+    pub right: u32,
+    pub bottom: u32,
+    pub left: u32,
 }
 
 impl Insets {
-    pub const ZERO: Self = Self::new(0, 0, 0, 0);
+    pub const ZERO: Self = Self::all(0);
 
-    pub const fn new(left: u16, right: u16, top: u16, bottom: u16) -> Self {
+    pub const fn new(top: u32, right: u32, bottom: u32, left: u32) -> Self {
         Self {
-            left,
-            right,
             top,
+            right,
             bottom,
+            left,
         }
     }
 
-    pub const fn all(value: u16) -> Self {
-        Self::new(value, value, value, value)
-    }
-
-    pub const fn symmetric(horizontal: u16, vertical: u16) -> Self {
-        Self::new(horizontal, horizontal, vertical, vertical)
-    }
-
-    pub const fn apply(self, area: Rect) -> Rect {
-        let left = area.left().saturating_add(self.left);
-        let top = area.top().saturating_add(self.top);
-        let right = area.right().saturating_sub(self.right);
-        let bottom = area.bottom().saturating_sub(self.bottom);
-
-        if right <= left || bottom <= top {
-            return Rect::new(left, top, 0, 0);
+    pub const fn all(value: u32) -> Self {
+        Self {
+            top: value,
+            right: value,
+            bottom: value,
+            left: value,
         }
+    }
 
-        Rect::new(left, top, right - left, bottom - top)
+    pub const fn symmetric(vertical: u32, horizontal: u32) -> Self {
+        Self {
+            top: vertical,
+            right: horizontal,
+            bottom: vertical,
+            left: horizontal,
+        }
+    }
+
+    pub const fn apply(self, area: Rectangle) -> Rectangle {
+        Rectangle::new(
+            Point::new(
+                area.top_left.x + self.left as i32,
+                area.top_left.y + self.top as i32,
+            ),
+            Size::new(
+                area.size.width.saturating_sub(self.left + self.right),
+                area.size.height.saturating_sub(self.top + self.bottom),
+            ),
+        )
     }
 }

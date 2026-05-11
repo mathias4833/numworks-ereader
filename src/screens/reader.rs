@@ -1,8 +1,7 @@
 use crate::app::AppAction;
-use crate::eadk;
-use crate::eadk::display::Color;
-use crate::geometry::Point;
 use crate::screens::{DrawContext, Event, Screen};
+use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::DrawTarget;
 
 pub struct ReaderScreen {}
 
@@ -13,14 +12,12 @@ impl ReaderScreen {
 }
 
 impl Screen for ReaderScreen {
-    fn draw(&self, ctx: DrawContext<'_>) {
-        eadk::display::draw_string(
-            c"Reader!",
-            Point::new(100, 100),
-            true,
-            Color::BLACK,
-            Color::WHITE,
-        );
+    fn draw<D>(&self, display: &mut D, ctx: DrawContext<'_>) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = Rgb565>,
+    {
+        // TODO
+        Ok(())
     }
 
     fn handle_event(&mut self, event: Event) -> AppAction {

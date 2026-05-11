@@ -3,7 +3,8 @@ use crate::eadk::event::Event;
 use crate::screens::home::HomeScreen;
 use crate::screens::reader::ReaderScreen;
 use crate::screens::{DrawContext, Screen};
-use crate::ui::widgets::battery_indicator::BatteryIndicator;
+use crate::ui::components::battery::BatteryState;
+use crate::ui::display::EadkDisplay;
 
 const EVENT_TIMEOUT_MS: i32 = 1000;
 
@@ -26,8 +27,9 @@ impl AppAction {
 }
 
 pub struct App {
+    display: EadkDisplay,
     screen: AppScreen,
-    battery: BatteryIndicator,
+    battery: BatteryState,
 }
 
 impl Default for App {
@@ -39,8 +41,9 @@ impl Default for App {
 impl App {
     pub fn new() -> Self {
         Self {
+            display: EadkDisplay::new(),
             screen: AppScreen::Home(HomeScreen::new()),
-            battery: BatteryIndicator::new(),
+            battery: BatteryState::new(),
         }
     }
 
@@ -94,14 +97,14 @@ impl App {
         }
     }
 
-    fn draw(&self) {
+    fn draw(&mut self) {
         let ctx = DrawContext {
             battery: &self.battery,
         };
 
-        match &self.screen {
-            AppScreen::Home(screen) => screen.draw(ctx),
-            AppScreen::Reader(screen) => screen.draw(ctx),
-        }
+        let _ = match &self.screen {
+            AppScreen::Home(screen) => screen.draw(&mut self.display, ctx),
+            AppScreen::Reader(screen) => screen.draw(&mut self.display, ctx),
+        };
     }
 }
