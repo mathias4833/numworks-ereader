@@ -124,14 +124,17 @@ impl BatteryView<'_> {
     where
         D: DrawTarget<Color = Rgb565>,
     {
-        let inner = self.inner();
+        let body = self.body();
 
         let level_raw: u8 = level.into();
-        let width = inner.size.width.saturating_mul(level_raw as u32) / 5;
+        let width = body.size.width.saturating_mul(level_raw as u32) / 5;
 
-        Rectangle::new(inner.top_left, Size::new(width, inner.size.height))
-            .into_styled(PrimitiveStyle::with_fill(color_for_level(level)))
-            .draw(display)?;
+        RoundedRectangle::with_equal_corners(
+            Rectangle::new(body.top_left, Size::new(width, body.size.height)),
+            Size::new(2, 2),
+        )
+        .into_styled(PrimitiveStyle::with_fill(color_for_level(level)))
+        .draw(display)?;
 
         Ok(())
     }
