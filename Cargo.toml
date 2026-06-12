@@ -9,3 +9,4 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 num_enum = { version = "0.7.6", default-features = false }
 embedded-graphics = "0.8.2"
+heapless = { version = "0.9.3", default-features = false }

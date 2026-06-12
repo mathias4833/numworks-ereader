@@ -1,33 +1,46 @@
 use crate::app::AppAction;
+use crate::book::{Book, Page, ALICE_IN_WONDERLAND};
 use crate::screens::{DrawContext, Event, Screen};
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN};
+use core::fmt::Write;
 use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
+use heapless::String;
 
-const READER_LINES: [&str; 11] = [
-    "Alice was beginning to get very tired of",
-    "sitting by her sister on the bank, and of",
-    "having nothing to do: once or twice she had",
-    "peeped into the book her sister was reading,",
-    "but it had no pictures or conversations in it,",
-    "\"and what is the use of a book,\" thought",
-    "Alice \"without pictures or conversations?\" So",
-    "she was considering in her own mind (as well",
-    "as she could, for the hot day made her feel",
-    "very sleepy and stupid), whether the pleasure",
-    "of making a daisy-chain would be worth the",
-];
-
-pub struct ReaderScreen {}
+pub struct ReaderScreen {
+    book: &'static Book<'static>,
+    page_index: usize,
+}
 
 impl ReaderScreen {
     pub const fn new() -> Self {
-        Self {}
+        Self {
+            book: &ALICE_IN_WONDERLAND,
+            page_index: 0,
+        }
+    }
+
+    fn previous_page(&mut self) -> bool {
+        if self.page_index == 0 {
+            return false;
+        }
+
+        self.page_index -= 1;
+        true
+    }
+
+    fn next_page(&mut self) -> bool {
+        if self.page_index + 1 >= self.book.page_count() {
+            return false;
+        }
+
+        self.page_index += 1;
+        true
     }
 }
 
@@ -45,26 +58,37 @@ impl Screen for ReaderScreen {
             .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
             .draw(display)?;
 
-        StatusBar::new(frame.status_bar(), "Alice in Wonderland")
+        StatusBar::new(frame.status_bar(), self.book.title())
             .with_battery(ctx.battery)
             .draw(display)?;
 
-        draw_reader_text(display, frame.content())?;
+        debug_assert!(self.page_index < self.book.page_count());
 
-        draw_bottom_bar(display, frame.bottom_bar())?;
+        if let Some(page) = self.book.page(self.page_index) {
+            draw_reader_text(display, frame.content(), page)?;
+        }
+
+        draw_bottom_bar(
+            display,
+            frame.bottom_bar(),
+            self.page_index,
+            self.book.page_count(),
+        )?;
 
         Ok(())
     }
 
     fn handle_event(&mut self, event: Event) -> AppAction {
         match event {
+            Event::Left | Event::Up => AppAction::redraw_if(self.previous_page()),
+            Event::Right | Event::Down | Event::Ok => AppAction::redraw_if(self.next_page()),
             Event::Back => AppAction::GoHome,
             _ => AppAction::None,
         }
     }
 }
 
-fn draw_reader_text<D>(display: &mut D, area: Rectangle) -> Result<(), D::Error>
+fn draw_reader_text<D>(display: &mut D, area: Rectangle, page: &Page<'_>) -> Result<(), D::Error>
 where
     D: DrawTarget<Color = Rgb565>,
 {
@@ -75,7 +99,7 @@ where
         .baseline(Baseline::Top)
         .build();
 
-    for (index, line) in READER_LINES.iter().enumerate() {
+    for (index, line) in page.lines().iter().enumerate() {
         Text::with_text_style(
             line,
             area.top_left + Point::new(0, index as i32 * line_height),
@@ -88,10 +112,25 @@ where
     Ok(())
 }
 
-fn draw_bottom_bar<D>(display: &mut D, area: Rectangle) -> Result<(), D::Error>
+fn draw_bottom_bar<D>(
+    display: &mut D,
+    area: Rectangle,
+    page_index: usize,
+    page_count: usize,
+) -> Result<(), D::Error>
 where
     D: DrawTarget<Color = Rgb565>,
 {
+    let mut page_label = String::<16>::new();
+    let _ = write!(page_label, "Page {} / {}", page_index + 1, page_count);
+
+    let mut progress_label = String::<5>::new();
+    let _ = write!(
+        progress_label,
+        "{}%",
+        progress_percent(page_index, page_count)
+    );
+
     area.into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
         .draw(display)?;
 
@@ -103,7 +142,7 @@ where
     .draw(display)?;
 
     Text::with_text_style(
-        "Page 1 / 1",
+        page_label.as_str(),
         Point::new(area.top_left.x + 8, area.center().y),
         MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
         TextStyleBuilder::new()
@@ -114,7 +153,7 @@ where
     .draw(display)?;
 
     Text::with_text_style(
-        "100%",
+        progress_label.as_str(),
         Point::new(
             area.top_left.x + area.size.width as i32 - 8,
             area.center().y,
@@ -128,4 +167,12 @@ where
     .draw(display)?;
 
     Ok(())
+}
+
+fn progress_percent(page_index: usize, page_count: usize) -> usize {
+    if page_count == 0 {
+        return 0;
+    }
+
+    ((page_index + 1) * 100) / page_count
 }
