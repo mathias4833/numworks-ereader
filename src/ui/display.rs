@@ -1,11 +1,11 @@
 use crate::eadk;
 use crate::eadk::display::{DISPLAY_HEIGHT, DISPLAY_WIDTH};
 use core::convert::Infallible;
-use embedded_graphics::Pixel;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::geometry::{OriginDimensions, Size};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::primitives::Rectangle;
+use embedded_graphics::Pixel;
 
 pub struct EadkDisplay;
 
@@ -33,6 +33,11 @@ impl DrawTarget for EadkDisplay {
             eadk::display::push_rect_uniform(Rectangle::new(point, Size::new(1, 1)), color);
         }
 
+        Ok(())
+    }
+
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) -> Result<(), Self::Error> {
+        eadk::display::push_rect_uniform(*area, color);
         Ok(())
     }
 }
