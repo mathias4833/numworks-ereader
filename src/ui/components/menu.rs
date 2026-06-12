@@ -39,13 +39,25 @@ impl<'a> Menu<'a> {
     }
 
     pub fn view(&self, layout: Stack) -> MenuView<'_, 'a> {
-        MenuView { menu: self, layout }
+        MenuView {
+            menu: self,
+            layout,
+            text_left_padding: 8,
+        }
     }
 }
 
 pub struct MenuView<'menu, 'items> {
     menu: &'menu Menu<'items>,
     layout: Stack,
+    text_left_padding: i32,
+}
+
+impl MenuView<'_, '_> {
+    pub const fn with_text_left_padding(mut self, padding: i32) -> Self {
+        self.text_left_padding = padding;
+        self
+    }
 }
 
 impl Drawable for MenuView<'_, '_> {
@@ -73,13 +85,15 @@ impl Drawable for MenuView<'_, '_> {
                 Rgb565::BLACK
             };
 
-            Rectangle::new(area.top_left, area.size)
-                .into_styled(PrimitiveStyle::with_fill(background))
-                .draw(display)?;
+            if selected {
+                Rectangle::new(area.top_left, area.size)
+                    .into_styled(PrimitiveStyle::with_fill(background))
+                    .draw(display)?;
+            }
 
             Text::with_text_style(
                 item,
-                area.top_left + Point::new(8, 6),
+                Point::new(area.top_left.x + self.text_left_padding, area.center().y),
                 MonoTextStyle::new(&FONT_7X14, foreground),
                 TextStyleBuilder::new()
                     .alignment(Alignment::Left)
