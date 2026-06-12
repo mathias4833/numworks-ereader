@@ -1,11 +1,11 @@
 use crate::eadk;
 use crate::eadk::display::{DISPLAY_HEIGHT, DISPLAY_WIDTH};
+use core::convert::Infallible;
+use embedded_graphics::Pixel;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::geometry::{OriginDimensions, Size};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::primitives::Rectangle;
-use embedded_graphics::Pixel;
-use std::convert::Infallible;
 
 pub struct EadkDisplay;
 

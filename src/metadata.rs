@@ -1,7 +1,7 @@
 #[used]
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".rodata.eadk_app_name")]
-pub static EADK_APP_NAME: [u8; 10] = *b"HelloRust\0";
+pub static EADK_APP_NAME: [u8; 16] = *b"NumWorks Reader\0";
 
 #[used]
 #[unsafe(no_mangle)]
