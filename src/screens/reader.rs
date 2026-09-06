@@ -1,8 +1,9 @@
 use crate::app::AppAction;
-use crate::book::{Book, Page, ALICE_IN_WONDERLAND};
+use crate::book::ALICE_IN_WONDERLAND;
 use crate::screens::{DrawContext, Event, Screen};
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN};
+use book_format::{Book, Page};
 use core::fmt::Write;
 use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::mono_font::MonoTextStyle;
