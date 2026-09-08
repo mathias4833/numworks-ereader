@@ -1,12 +1,11 @@
 use crate::app::AppAction;
-use crate::book::ALICE_IN_WONDERLAND;
 use crate::screens::{DrawContext, Event, Screen};
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN};
 use book_format::{Book, Page};
 use core::fmt::Write;
-use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
@@ -14,14 +13,14 @@ use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use heapless::String;
 
 pub struct ReaderScreen {
-    book: &'static Book<'static>,
+    book: Book<'static>,
     page_index: usize,
 }
 
 impl ReaderScreen {
-    pub const fn new() -> Self {
+    pub const fn new(book: Book<'static>) -> Self {
         Self {
-            book: &ALICE_IN_WONDERLAND,
+            book,
             page_index: 0,
         }
     }
@@ -66,7 +65,7 @@ impl Screen for ReaderScreen {
         debug_assert!(self.page_index < self.book.page_count());
 
         if let Some(page) = self.book.page(self.page_index) {
-            draw_reader_text(display, frame.content(), page)?;
+            draw_reader_text(display, frame.content(), &page)?;
         }
 
         draw_bottom_bar(
@@ -100,7 +99,7 @@ where
         .baseline(Baseline::Top)
         .build();
 
-    for (index, line) in page.lines().iter().enumerate() {
+    for (index, line) in page.lines().enumerate() {
         Text::with_text_style(
             line,
             area.top_left + Point::new(0, index as i32 * line_height),
