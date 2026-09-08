@@ -1,5 +1,5 @@
 [workspace]
-members = ["book-format", "xtask"]
+members = ["book-converter","book-format", "xtask"]
 default-members = ["."]
 resolver = "3"
 

@@ -13,4 +13,6 @@ fn main() {
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
+
+    println!("cargo:rerun-if-changed=assets/alice.nwbook");
 }

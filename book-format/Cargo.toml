@@ -3,4 +3,8 @@ name = "book-format"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+std = []
+
 [dependencies]
