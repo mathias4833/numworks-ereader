@@ -11,7 +11,7 @@ impl<'a> Book<'a> {
     pub fn parse(data: &'a [u8]) -> Result<Self, ParseError> {
         let mut reader = Reader::new(data);
 
-        let magic = reader.take(4).ok_or(ParseError::TooShort)?;
+        let magic = reader.take(MAGIC.len()).ok_or(ParseError::TooShort)?;
         if magic != MAGIC {
             return Err(ParseError::InvalidMagic);
         }
@@ -29,7 +29,7 @@ impl<'a> Book<'a> {
 
         let offsets_len = page_count
             .checked_add(1) // +1 for the last page offset
-            .and_then(|n| n.checked_mul(4))
+            .and_then(|n| n.checked_mul(size_of::<u32>()))
             .ok_or(ParseError::InvalidPageOffsets)?;
 
         let page_offsets = reader
@@ -50,7 +50,7 @@ impl<'a> Book<'a> {
     }
 
     pub const fn page_count(&self) -> usize {
-        self.page_offsets.len() / 4 - 1
+        self.page_offsets.len() / size_of::<u32>() - 1
     }
 
     pub fn page(&self, index: usize) -> Option<Page<'a>> {
@@ -58,8 +58,8 @@ impl<'a> Book<'a> {
             return None;
         }
 
-        let start = read_u32(self.page_offsets, index * 4)? as usize;
-        let end = read_u32(self.page_offsets, (index + 1) * 4)? as usize;
+        let start = read_u32(self.page_offsets, index * size_of::<u32>())? as usize;
+        let end = read_u32(self.page_offsets, (index + 1) * size_of::<u32>())? as usize;
 
         let text = self.pages.get(start..end)?;
         Some(Page { text })
