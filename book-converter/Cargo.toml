@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 book-format = { path = "../book-format", features = ["std"] }
+deunicode = "1.6.2"

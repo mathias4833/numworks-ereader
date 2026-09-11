@@ -1,8 +1,10 @@
-mod paginate;
+mod converter;
 
-use crate::paginate::paginate;
-use book_format::BookBuilder;
+use crate::converter::Converter;
 use std::{env, fs};
+
+const CHARS_PER_LINE: usize = 44;
+const LINES_PER_PAGE: usize = 11;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -15,16 +17,15 @@ fn main() {
     let output = &args[2];
 
     let text = fs::read_to_string(input).expect("failed to read input file");
-    let pages = paginate(&text);
-
     let title = std::path::Path::new(input)
         .file_stem()
         .unwrap()
         .to_string_lossy()
         .into_owned();
 
-    let book = BookBuilder::new(title, pages);
-    let data = book.encode().unwrap();
+    let data = Converter::new(CHARS_PER_LINE, LINES_PER_PAGE)
+        .convert(title, &text)
+        .expect("failed to convert");
 
-    std::fs::write(output, data).unwrap();
+    fs::write(output, data).unwrap();
 }

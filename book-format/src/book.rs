@@ -1,5 +1,15 @@
 use crate::utils::{Reader, read_u32};
-use crate::{MAGIC, ParseError, VERSION};
+use crate::{MAGIC, VERSION};
+
+#[derive(Debug)]
+pub enum ParseError {
+    TooShort,
+    InvalidMagic,
+    UnsupportedVersion,
+    InvalidTitle,
+    InvalidPageOffsets,
+    InvalidPageData,
+}
 
 pub struct Book<'a> {
     title: &'a str,
