@@ -1,5 +1,6 @@
 use crate::eadk;
 use crate::eadk::event::Event;
+use crate::reading::ReadingState;
 use crate::screens::home::HomeScreen;
 use crate::screens::reader::ReaderScreen;
 use crate::screens::{DrawContext, Screen};
@@ -18,6 +19,8 @@ pub enum AppAction {
     Redraw,
     OpenReader,
     GoHome,
+    PreviousPage,
+    NextPage,
 }
 
 impl AppAction {
@@ -30,6 +33,7 @@ pub struct App {
     display: EadkDisplay,
     screen: AppScreen,
     battery: BatteryState,
+    reading: ReadingState,
 }
 
 impl Default for App {
@@ -44,6 +48,7 @@ impl App {
             display: EadkDisplay::new(),
             screen: AppScreen::Home(HomeScreen::new()),
             battery: BatteryState::new(),
+            reading: ReadingState::new(crate::book::load().unwrap()),
         }
     }
 
@@ -87,7 +92,7 @@ impl App {
 
             AppAction::OpenReader => {
                 if let Ok(book) = crate::book::load() {
-                    self.screen = AppScreen::Reader(ReaderScreen::new(book));
+                    self.screen = AppScreen::Reader(ReaderScreen::new());
                     true
                 } else {
                     false
@@ -98,12 +103,17 @@ impl App {
                 self.screen = AppScreen::Home(HomeScreen::new());
                 true
             }
+
+            AppAction::PreviousPage => self.reading.previous_page(),
+
+            AppAction::NextPage => self.reading.next_page(),
         }
     }
 
     fn draw(&mut self) {
         let ctx = DrawContext {
             battery: &self.battery,
+            reading: &self.reading,
         };
 
         let _ = match &self.screen {

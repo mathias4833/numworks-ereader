@@ -1,5 +1,6 @@
 use crate::app::AppAction;
 use crate::eadk::event::Event;
+use crate::reading::ReadingState;
 use crate::ui::components::battery::BatteryState;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::DrawTarget;
@@ -9,6 +10,7 @@ pub mod reader;
 
 pub struct DrawContext<'a> {
     pub battery: &'a BatteryState,
+    pub reading: &'a ReadingState,
 }
 
 pub trait Screen {

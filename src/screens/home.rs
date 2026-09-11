@@ -1,17 +1,20 @@
 use crate::app::AppAction;
 use crate::eadk::event::Event;
+use crate::reading::ReadingState;
 use crate::screens::{DrawContext, Screen};
 use crate::ui::components::menu::Menu;
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::icons::{Icon, IconView};
-use crate::ui::layout::{Frame, Insets, Stack, SCREEN};
+use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
+use core::fmt::Write;
+use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::mono_font::ascii::FONT_9X18;
 use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
-use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
+use heapless::String;
 
 static HOME_ITEMS: [&str; 4] = ["Open reader", "Browse files", "Recent books", "Settings"];
 static HOME_ICONS: [Icon; 4] = [Icon::Book, Icon::Folder, Icon::Recent, Icon::Settings];
@@ -51,7 +54,7 @@ impl Screen for HomeScreen {
 
         let content = frame.content();
         let book_panel = Rectangle::new(content.top_left, Size::new(content.size.width, 74));
-        draw_current_book(display, book_panel)?;
+        draw_current_book(display, book_panel, ctx.reading)?;
 
         let menu_top = content.top_left.y + book_panel.size.height as i32 + 8;
         let menu_area = Rectangle::new(
@@ -94,7 +97,11 @@ impl Screen for HomeScreen {
     }
 }
 
-fn draw_current_book<D>(display: &mut D, area: Rectangle) -> Result<(), D::Error>
+fn draw_current_book<D>(
+    display: &mut D,
+    area: Rectangle,
+    reading: &ReadingState,
+) -> Result<(), D::Error>
 where
     D: DrawTarget<Color = Rgb565>,
 {
@@ -129,7 +136,7 @@ where
     .draw(display)?;
 
     Text::with_text_style(
-        "No book loaded",
+        reading.book().title(),
         area.top_left + Point::new(64, 40),
         MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
         TextStyleBuilder::new()
@@ -138,6 +145,9 @@ where
             .build(),
     )
     .draw(display)?;
+
+    let mut progress = String::<5>::new();
+    let _ = write!(progress, "{}%", reading.progress_percent());
 
     Text::with_text_style(
         "0%",

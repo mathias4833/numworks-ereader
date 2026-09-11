@@ -6,6 +6,7 @@ pub mod app;
 mod book;
 pub mod eadk;
 mod metadata;
+mod reading;
 mod screens;
 mod ui;
 
