@@ -1,11 +1,7 @@
-use crate::{MAGIC, VERSION};
+use crate::utils::Writer;
+use crate::{BOOK_MAGIC, EncodeError, LIBRARY_MAGIC, VERSION};
 use std::string::String;
 use std::vec::Vec;
-
-#[derive(Debug)]
-pub enum EncodeError {
-    TooLarge,
-}
 
 pub struct BookBuilder {
     title: String,
@@ -18,30 +14,46 @@ impl BookBuilder {
     }
 
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
-        let page_count = u32::try_from(self.pages.len()).map_err(|_| EncodeError::TooLarge)?;
-        let title_len = u32::try_from(self.title.len()).map_err(|_| EncodeError::TooLarge)?;
+        let mut writer = Writer::new();
+        self.write_to(&mut writer)?;
+        Ok(writer.finish())
+    }
 
-        let mut data = Vec::new();
+    fn write_to(&self, writer: &mut Writer) -> Result<(), EncodeError> {
+        writer.bytes(BOOK_MAGIC);
+        writer.u16(VERSION);
+        writer.u32(self.pages.len())?;
+        writer.u32(self.title.len())?;
 
-        data.extend_from_slice(MAGIC);
-        data.extend_from_slice(&VERSION.to_le_bytes());
-        data.extend_from_slice(&page_count.to_le_bytes());
-        data.extend_from_slice(&title_len.to_le_bytes());
+        writer.bytes(self.title.as_bytes());
 
-        data.extend_from_slice(self.title.as_bytes());
+        writer.indexed(&self.pages, |writer, page| {
+            writer.bytes(page.as_bytes());
+            Ok(())
+        })?;
 
-        let mut offset = 0u32;
-        for page in &self.pages {
-            data.extend_from_slice(&offset.to_le_bytes());
-            let page_len = u32::try_from(page.len()).map_err(|_| EncodeError::TooLarge)?;
-            offset = offset.checked_add(page_len).ok_or(EncodeError::TooLarge)?;
-        }
-        data.extend_from_slice(&offset.to_le_bytes());
+        Ok(())
+    }
+}
 
-        for page in &self.pages {
-            data.extend_from_slice(page.as_bytes());
-        }
+pub struct LibraryBuilder {
+    books: Vec<BookBuilder>,
+}
 
-        Ok(data)
+impl LibraryBuilder {
+    pub fn new(books: Vec<BookBuilder>) -> Self {
+        Self { books }
+    }
+
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut writer = Writer::new();
+
+        writer.bytes(LIBRARY_MAGIC);
+        writer.u16(VERSION);
+        writer.u32(self.books.len())?;
+
+        writer.indexed(&self.books, |writer, book| book.write_to(writer))?;
+
+        Ok(writer.finish())
     }
 }

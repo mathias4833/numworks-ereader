@@ -11,5 +11,5 @@ pub fn get() -> &'static [u8] {
 
 #[cfg(not(target_os = "none"))]
 pub fn get() -> &'static [u8] {
-    include_bytes!("../../assets/alice.nwbook")
+    include_bytes!("../../assets/library.nwlib")
 }

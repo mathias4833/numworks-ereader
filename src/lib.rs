@@ -3,7 +3,6 @@
 use crate::app::App;
 
 pub mod app;
-mod book;
 pub mod eadk;
 mod metadata;
 mod reading;

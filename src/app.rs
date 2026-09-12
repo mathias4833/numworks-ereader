@@ -6,6 +6,7 @@ use crate::screens::reader::ReaderScreen;
 use crate::screens::{DrawContext, Screen};
 use crate::ui::components::battery::BatteryState;
 use crate::ui::display::EadkDisplay;
+use book_format::Library;
 
 const EVENT_TIMEOUT_MS: i32 = 1000;
 
@@ -32,6 +33,7 @@ impl AppAction {
 pub struct App {
     display: EadkDisplay,
     screen: AppScreen,
+    library: Library<'static>,
     battery: BatteryState,
     reading: ReadingState,
 }
@@ -44,11 +46,15 @@ impl Default for App {
 
 impl App {
     pub fn new() -> Self {
+        let library = Library::parse(eadk::external_data::get()).unwrap();
+        let book = library.book(0).unwrap().expect("library is empty");
+
         Self {
             display: EadkDisplay::new(),
             screen: AppScreen::Home(HomeScreen::new()),
+            library,
             battery: BatteryState::new(),
-            reading: ReadingState::new(crate::book::load().unwrap()),
+            reading: ReadingState::new(0, book),
         }
     }
 

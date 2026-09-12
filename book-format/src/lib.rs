@@ -5,11 +5,31 @@ mod utils;
 
 #[cfg(feature = "std")]
 mod builder;
+mod library;
 
-pub const MAGIC: &[u8; 4] = b"NWBK";
-pub const VERSION: u16 = 1;
+const BOOK_MAGIC: &[u8; 4] = b"NWBK";
+const LIBRARY_MAGIC: &[u8; 4] = b"NWLB";
+const VERSION: u16 = 1;
 
-pub use book::{Book, Page, ParseError};
+#[derive(Debug)]
+pub enum ParseError {
+    TooShort,
+    InvalidMagic,
+    UnsupportedVersion,
+    InvalidTitle,
+    InvalidPageOffsets,
+    InvalidPageData,
+    InvalidBookOffsets,
+}
 
 #[cfg(feature = "std")]
-pub use builder::{BookBuilder, EncodeError};
+#[derive(Debug)]
+pub enum EncodeError {
+    TooLarge,
+}
+
+pub use book::{Book, Page};
+pub use library::Library;
+
+#[cfg(feature = "std")]
+pub use builder::{BookBuilder, LibraryBuilder};

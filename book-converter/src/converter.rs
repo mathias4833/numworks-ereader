@@ -1,4 +1,4 @@
-use book_format::{BookBuilder, EncodeError};
+use book_format::BookBuilder;
 use deunicode::deunicode;
 
 pub struct Converter {
@@ -14,11 +14,11 @@ impl Converter {
         }
     }
 
-    pub fn convert(&self, title: String, text: &str) -> Result<Vec<u8>, EncodeError> {
+    pub fn convert(&self, title: String, text: &str) -> BookBuilder {
         let text = deunicode(text).replace("\r\n", "\n");
         let pages = self.paginate(&text);
 
-        BookBuilder::new(title, pages).encode()
+        BookBuilder::new(title, pages)
     }
 
     fn paginate(&self, text: &str) -> Vec<String> {
