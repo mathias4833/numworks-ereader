@@ -2,8 +2,9 @@ use crate::eadk;
 use crate::eadk::event::Event;
 use crate::reading::ReadingState;
 use crate::screens::home::HomeScreen;
+use crate::screens::library::LibraryScreen;
 use crate::screens::reader::ReaderScreen;
-use crate::screens::{DrawContext, Screen};
+use crate::screens::{Screen, ScreenContext};
 use crate::ui::components::battery::BatteryState;
 use crate::ui::display::EadkDisplay;
 use book_format::Library;
@@ -13,12 +14,15 @@ const EVENT_TIMEOUT_MS: i32 = 1000;
 pub enum AppScreen {
     Home(HomeScreen),
     Reader(ReaderScreen),
+    Library(LibraryScreen),
 }
 
 pub enum AppAction {
     None,
     Redraw,
     OpenReader,
+    OpenLibrary,
+    OpenBook(usize),
     GoHome,
     PreviousPage,
     NextPage,
@@ -47,14 +51,15 @@ impl Default for App {
 impl App {
     pub fn new() -> Self {
         let library = Library::parse(eadk::external_data::get()).unwrap();
-        let book = library.book(0).unwrap().expect("library is empty");
+        let reading = ReadingState::new(library.book_count())
+            .expect("library is empty or contains too many books");
 
         Self {
             display: EadkDisplay::new(),
             screen: AppScreen::Home(HomeScreen::new()),
             library,
             battery: BatteryState::new(),
-            reading: ReadingState::new(0, book),
+            reading,
         }
     }
 
@@ -85,6 +90,7 @@ impl App {
     fn current_screen_handle_event(&mut self, event: Event) -> AppAction {
         match &mut self.screen {
             AppScreen::Home(screen) => screen.handle_event(event),
+            AppScreen::Library(screen) => screen.handle_event(event),
             AppScreen::Reader(screen) => screen.handle_event(event),
         }
     }
@@ -101,6 +107,23 @@ impl App {
                 true
             }
 
+            AppAction::OpenLibrary => {
+                self.screen = AppScreen::Library(LibraryScreen::new(
+                    &self.library,
+                    self.reading.current_book(),
+                ));
+                true
+            }
+
+            AppAction::OpenBook(index) => {
+                if !self.reading.select_book(index) {
+                    return false;
+                }
+
+                self.screen = AppScreen::Reader(ReaderScreen::new());
+                true
+            }
+
             AppAction::GoHome => {
                 self.screen = AppScreen::Home(HomeScreen::new());
                 true
@@ -108,18 +131,26 @@ impl App {
 
             AppAction::PreviousPage => self.reading.previous_page(),
 
-            AppAction::NextPage => self.reading.next_page(),
+            AppAction::NextPage => {
+                let Ok(Some(book)) = self.library.book(self.reading.current_book()) else {
+                    return false;
+                };
+
+                self.reading.next_page(book.page_count())
+            }
         }
     }
 
     fn draw(&mut self) {
-        let ctx = DrawContext {
+        let ctx = ScreenContext {
             battery: &self.battery,
             reading: &self.reading,
+            library: &self.library,
         };
 
         let _ = match &self.screen {
             AppScreen::Home(screen) => screen.draw(&mut self.display, ctx),
+            AppScreen::Library(screen) => screen.draw(&mut self.display, ctx),
             AppScreen::Reader(screen) => screen.draw(&mut self.display, ctx),
         };
     }

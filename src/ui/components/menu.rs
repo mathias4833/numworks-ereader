@@ -1,21 +1,31 @@
 use crate::ui::layout::Stack;
+use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
-use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
-use embedded_graphics::Drawable;
 
-pub struct Menu<'a> {
-    items: &'a [&'a str],
+pub struct Menu<I>
+where
+    I: AsRef<[&'static str]>,
+{
+    items: I,
     selected: usize,
 }
 
-impl<'a> Menu<'a> {
-    pub const fn new(items: &'a [&'a str]) -> Self {
+impl<I> Menu<I>
+where
+    I: AsRef<[&'static str]>,
+{
+    pub const fn new(items: I) -> Self {
         Self { items, selected: 0 }
+    }
+
+    pub const fn with_selected(items: I, selected: usize) -> Self {
+        Self { items, selected }
     }
 
     pub fn selected(&self) -> usize {
@@ -29,16 +39,16 @@ impl<'a> Menu<'a> {
     }
 
     pub fn move_down(&mut self) -> bool {
-        if self.items.is_empty() {
+        if self.items.as_ref().is_empty() {
             return false;
         }
 
         let previous = self.selected;
-        self.selected = (self.selected + 1).min(self.items.len() - 1);
+        self.selected = (self.selected + 1).min(self.items.as_ref().len() - 1);
         self.selected != previous
     }
 
-    pub fn view(&self, layout: Stack) -> MenuView<'_, 'a> {
+    pub fn view(&self, layout: Stack) -> MenuView<'_, I> {
         MenuView {
             menu: self,
             layout,
@@ -47,20 +57,29 @@ impl<'a> Menu<'a> {
     }
 }
 
-pub struct MenuView<'menu, 'items> {
-    menu: &'menu Menu<'items>,
+pub struct MenuView<'a, I>
+where
+    I: AsRef<[&'static str]>,
+{
+    menu: &'a Menu<I>,
     layout: Stack,
     text_left_padding: i32,
 }
 
-impl MenuView<'_, '_> {
+impl<I> MenuView<'_, I>
+where
+    I: AsRef<[&'static str]>,
+{
     pub const fn with_text_left_padding(mut self, padding: i32) -> Self {
         self.text_left_padding = padding;
         self
     }
 }
 
-impl Drawable for MenuView<'_, '_> {
+impl<I> Drawable for MenuView<'_, I>
+where
+    I: AsRef<[&'static str]>,
+{
     type Color = Rgb565;
     type Output = ();
 
@@ -68,7 +87,7 @@ impl Drawable for MenuView<'_, '_> {
     where
         D: DrawTarget<Color = Self::Color>,
     {
-        for (index, item) in self.menu.items.iter().enumerate() {
+        for (index, item) in self.menu.items.as_ref().iter().enumerate() {
             let Some(area) = self.layout.item_rect(index) else {
                 continue;
             };

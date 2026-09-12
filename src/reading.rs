@@ -1,62 +1,72 @@
-use book_format::Book;
+use heapless::Vec;
 
-pub struct ReadingState {
-    book: Book<'static>,
-    book_index: usize,
+const MAX_BOOKS: usize = 32;
+
+#[derive(Clone, Copy, Default)]
+struct BookProgress {
     page_index: usize,
 }
 
+pub struct ReadingState {
+    current_book: usize,
+    progress: Vec<BookProgress, MAX_BOOKS>,
+}
+
 impl ReadingState {
-    pub const fn new(book_index: usize, book: Book<'static>) -> Self {
-        Self {
-            book,
-            book_index,
-            page_index: 0,
+    pub fn new(book_count: usize) -> Option<Self> {
+        if book_count == 0 {
+            return None;
         }
+        let progress = (0..book_count).map(|_| BookProgress::default()).collect();
+
+        Some(Self {
+            current_book: 0,
+            progress,
+        })
     }
 
-    pub const fn book(&self) -> &Book<'static> {
-        &self.book
+    pub const fn current_book(&self) -> usize {
+        self.current_book
     }
 
-    pub const fn book_index(&self) -> usize {
-        self.book_index
+    pub fn current_page(&self) -> usize {
+        self.progress[self.current_book].page_index
     }
 
-    pub const fn page_index(&self) -> usize {
-        self.page_index
-    }
+    pub fn select_book(&mut self, index: usize) -> bool {
+        if index >= self.progress.len() {
+            return false;
+        }
 
-    pub fn open_book(&mut self, book_index: usize, book: Book<'static>) {
-        self.book = book;
-        self.book_index = book_index;
-        self.page_index = 0;
+        self.current_book = index;
+        true
     }
 
     pub fn previous_page(&mut self) -> bool {
-        if self.page_index == 0 {
+        let progress = &mut self.progress[self.current_book];
+        if progress.page_index == 0 {
             return false;
         }
 
-        self.page_index -= 1;
+        progress.page_index -= 1;
         true
     }
 
-    pub fn next_page(&mut self) -> bool {
-        if self.page_index + 1 >= self.book.page_count() {
+    pub fn next_page(&mut self, page_count: usize) -> bool {
+        let progress = &mut self.progress[self.current_book];
+        if progress.page_index + 1 >= page_count {
             return false;
         }
 
-        self.page_index += 1;
+        progress.page_index += 1;
         true
     }
 
-    pub fn progress_percent(&self) -> usize {
-        let page_count = self.book.page_count();
+    pub fn progress_percent(&self, page_count: usize) -> usize {
         if page_count == 0 {
             return 0;
         }
 
-        (self.page_index + 1) * 100 / page_count
+        (self.current_page() + 1) * 100 / page_count
     }
 }

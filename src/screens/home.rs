@@ -1,7 +1,6 @@
 use crate::app::AppAction;
 use crate::eadk::event::Event;
-use crate::reading::ReadingState;
-use crate::screens::{DrawContext, Screen};
+use crate::screens::{Screen, ScreenContext};
 use crate::ui::components::menu::Menu;
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::icons::{Icon, IconView};
@@ -16,7 +15,7 @@ use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use heapless::String;
 
-static HOME_ITEMS: [&str; 4] = ["Open reader", "Browse files", "Recent books", "Settings"];
+static HOME_ITEMS: [&str; 4] = ["Open reader", "Library", "Recent books", "Settings"];
 static HOME_ICONS: [Icon; 4] = [Icon::Book, Icon::Folder, Icon::Recent, Icon::Settings];
 
 fn panel_gray() -> Rgb565 {
@@ -24,7 +23,7 @@ fn panel_gray() -> Rgb565 {
 }
 
 pub struct HomeScreen {
-    menu: Menu<'static>,
+    menu: Menu<&'static [&'static str]>,
 }
 
 impl HomeScreen {
@@ -36,7 +35,7 @@ impl HomeScreen {
 }
 
 impl Screen for HomeScreen {
-    fn draw<D>(&self, display: &mut D, ctx: DrawContext<'_>) -> Result<(), D::Error>
+    fn draw<D>(&self, display: &mut D, ctx: ScreenContext<'_>) -> Result<(), D::Error>
     where
         D: DrawTarget<Color = Rgb565>,
     {
@@ -54,7 +53,7 @@ impl Screen for HomeScreen {
 
         let content = frame.content();
         let book_panel = Rectangle::new(content.top_left, Size::new(content.size.width, 74));
-        draw_current_book(display, book_panel, ctx.reading)?;
+        draw_current_book(display, book_panel, ctx)?;
 
         let menu_top = content.top_left.y + book_panel.size.height as i32 + 8;
         let menu_area = Rectangle::new(
@@ -88,6 +87,7 @@ impl Screen for HomeScreen {
 
             Event::Ok => match self.menu.selected() {
                 0 => AppAction::OpenReader,
+                1 => AppAction::OpenLibrary,
                 3 => AppAction::None, // TODO: Settings
                 _ => AppAction::None,
             },
@@ -100,7 +100,7 @@ impl Screen for HomeScreen {
 fn draw_current_book<D>(
     display: &mut D,
     area: Rectangle,
-    reading: &ReadingState,
+    ctx: ScreenContext<'_>,
 ) -> Result<(), D::Error>
 where
     D: DrawTarget<Color = Rgb565>,
@@ -135,8 +135,12 @@ where
     )
     .draw(display)?;
 
+    let book = ctx.library.book(ctx.reading.current_book()).ok().flatten();
+    let title = book.as_ref().map(|book| book.title()).unwrap_or("Invalid");
+    let page_count = book.as_ref().map(|book| book.page_count()).unwrap_or(0);
+
     Text::with_text_style(
-        reading.book().title(),
+        title,
         area.top_left + Point::new(64, 40),
         MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
         TextStyleBuilder::new()
@@ -147,7 +151,7 @@ where
     .draw(display)?;
 
     let mut progress = String::<5>::new();
-    let _ = write!(progress, "{}%", reading.progress_percent());
+    let _ = write!(progress, "{}%", ctx.reading.progress_percent(page_count));
 
     Text::with_text_style(
         progress.as_str(),

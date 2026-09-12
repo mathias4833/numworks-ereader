@@ -1,5 +1,5 @@
 use crate::app::AppAction;
-use crate::screens::{DrawContext, Event, Screen};
+use crate::screens::{Event, Screen, ScreenContext};
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN};
 use book_format::Page;
@@ -21,7 +21,7 @@ impl ReaderScreen {
 }
 
 impl Screen for ReaderScreen {
-    fn draw<D>(&self, display: &mut D, ctx: DrawContext<'_>) -> Result<(), D::Error>
+    fn draw<D>(&self, display: &mut D, ctx: ScreenContext<'_>) -> Result<(), D::Error>
     where
         D: DrawTarget<Color = Rgb565>,
     {
@@ -34,8 +34,10 @@ impl Screen for ReaderScreen {
             .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
             .draw(display)?;
 
-        let book = ctx.reading.book();
-        let page_index = ctx.reading.page_index();
+        let Ok(Some(book)) = ctx.library.book(ctx.reading.current_book()) else {
+            return Ok(());
+        };
+        let page_index = ctx.reading.current_page();
 
         StatusBar::new(frame.status_bar(), book.title())
             .with_battery(ctx.battery)
