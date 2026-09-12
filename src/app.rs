@@ -91,12 +91,8 @@ impl App {
             AppAction::Redraw => true,
 
             AppAction::OpenReader => {
-                if let Ok(book) = crate::book::load() {
-                    self.screen = AppScreen::Reader(ReaderScreen::new());
-                    true
-                } else {
-                    false
-                }
+                self.screen = AppScreen::Reader(ReaderScreen::new());
+                true
             }
 
             AppAction::GoHome => {

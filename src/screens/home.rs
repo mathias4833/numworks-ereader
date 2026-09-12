@@ -150,7 +150,7 @@ where
     let _ = write!(progress, "{}%", reading.progress_percent());
 
     Text::with_text_style(
-        "0%",
+        progress.as_str(),
         area.top_left + Point::new(area.size.width as i32 - 12, 12),
         MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
         TextStyleBuilder::new()

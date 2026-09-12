@@ -1,5 +1,5 @@
 [target.thumbv7em-none-eabihf]
-runner = "npx --yes -- nwlink install-nwa --external-data assets/test.nwbook"
+runner = "npx --yes -- nwlink install-nwa --external-data assets/alice.nwbook"
 rustflags = ["-C", "link-arg=--relocatable", "-C", "link-arg=-no-gc-sections"]
 
 [alias]
