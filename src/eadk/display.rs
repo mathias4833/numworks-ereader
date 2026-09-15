@@ -65,12 +65,13 @@ pub fn push_rect_uniform(rect: Rectangle, color: Rgb565) {
     }
 }
 
-// TODO
-// pub fn push_rect(rect: Rectangle, pixels: &[Rgb565]) {
-//     unsafe {
-//         eadk_display_push_rect(rect, pixels.as_ptr());
-//     }
-// }
+pub fn push_rect(rect: Rectangle, pixels: &[Rgb565]) {
+    if let Ok(rect) = EadkRect::try_from(rect) {
+        unsafe {
+            eadk_display_push_rect(rect, pixels.as_ptr().cast::<EadkColor>());
+        }
+    }
+}
 
 pub fn wait_for_vblank() {
     unsafe {

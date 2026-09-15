@@ -1,11 +1,12 @@
 use crate::eadk;
 use crate::eadk::display::{DISPLAY_HEIGHT, DISPLAY_WIDTH};
 use core::convert::Infallible;
+use embedded_graphics::Pixel;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::geometry::{OriginDimensions, Size};
 use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::{Point, RgbColor};
 use embedded_graphics::primitives::Rectangle;
-use embedded_graphics::Pixel;
 
 pub struct EadkDisplay;
 
@@ -31,6 +32,31 @@ impl DrawTarget for EadkDisplay {
     {
         for Pixel(point, color) in pixels {
             eadk::display::push_rect_uniform(Rectangle::new(point, Size::new(1, 1)), color);
+        }
+
+        Ok(())
+    }
+
+    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Rgb565>,
+    {
+        let width = area.size.width as usize;
+        let mut colors = colors.into_iter();
+        let mut line = [Rgb565::BLACK; DISPLAY_WIDTH as usize];
+
+        for y in 0..area.size.height {
+            for (pixel, color) in line[..width].iter_mut().zip(colors.by_ref()) {
+                *pixel = color.into();
+            }
+
+            eadk::display::push_rect(
+                Rectangle::new(
+                    Point::new(area.top_left.x, area.top_left.y + y as i32),
+                    Size::new(area.size.width, 1),
+                ),
+                &line[..width],
+            );
         }
 
         Ok(())
