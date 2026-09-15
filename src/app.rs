@@ -142,6 +142,11 @@ impl App {
     }
 
     fn draw(&mut self) {
+        // The display refreshes at 40 Hz (~25 ms/frame). Since drawing is done
+        // directly to the screen, wait for VBlank to reduce visible tearing.
+        // See: https://github.com/numworks/epsilon/issues/2401
+        eadk::display::wait_for_vblank();
+
         let ctx = ScreenContext {
             battery: &self.battery,
             reading: &self.reading,

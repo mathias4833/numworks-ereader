@@ -1,6 +1,6 @@
 use embedded_graphics::geometry::{Point, Size};
-use embedded_graphics::pixelcolor::raw::RawU16;
 use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::pixelcolor::raw::RawU16;
 use embedded_graphics::prelude::RawData;
 use embedded_graphics::primitives::Rectangle;
 
@@ -72,7 +72,14 @@ pub fn push_rect_uniform(rect: Rectangle, color: Rgb565) {
 //     }
 // }
 
+pub fn wait_for_vblank() {
+    unsafe {
+        eadk_display_wait_for_vblank();
+    }
+}
+
 unsafe extern "C" {
     fn eadk_display_push_rect_uniform(rect: EadkRect, color: EadkColor);
     fn eadk_display_push_rect(rect: EadkRect, pixels: *const EadkColor);
+    fn eadk_display_wait_for_vblank() -> bool;
 }
