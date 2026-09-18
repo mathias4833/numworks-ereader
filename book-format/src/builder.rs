@@ -1,7 +1,9 @@
 use crate::utils::Writer;
-use crate::{BOOK_MAGIC, EncodeError, LIBRARY_MAGIC, VERSION};
+use crate::{BOOK_MAGIC, COVER_BYTE_LEN, EncodeError, LIBRARY_MAGIC, VERSION};
 use std::string::String;
 use std::vec::Vec;
+
+const DEFAULT_COVER: &[u8; COVER_BYTE_LEN] = include_bytes!("../../assets/default-cover.rgb565");
 
 pub struct BookBuilder {
     title: String,
@@ -26,6 +28,7 @@ impl BookBuilder {
         writer.u32(self.title.len())?;
 
         writer.bytes(self.title.as_bytes());
+        writer.bytes(DEFAULT_COVER);
 
         writer.indexed(&self.pages, |writer, page| {
             writer.bytes(page.as_bytes());

@@ -11,7 +11,6 @@ const ICON_HEIGHT: u32 = 12;
 pub enum Icon {
     Book,
     Folder,
-    Recent,
     Settings,
 }
 
@@ -66,7 +65,6 @@ fn bitmap_for(icon: Icon) -> &'static [u16; ICON_HEIGHT as usize] {
     match icon {
         Icon::Book => &BOOK,
         Icon::Folder => &FOLDER,
-        Icon::Recent => &RECENT,
         Icon::Settings => &SETTINGS,
     }
 }
@@ -99,21 +97,6 @@ const FOLDER: [u16; ICON_HEIGHT as usize] = [
     0b1000000000100,
     0b1000000000100,
     0b1111111111100,
-];
-
-const RECENT: [u16; ICON_HEIGHT as usize] = [
-    0b0011111111000,
-    0b0010000001000,
-    0b0010000001000,
-    0b0010111101000,
-    0b0010000001000,
-    0b0010111101000,
-    0b0010000001000,
-    0b0010111101000,
-    0b0010000001000,
-    0b0010000001000,
-    0b0010000001000,
-    0b0011111111000,
 ];
 
 const SETTINGS: [u16; ICON_HEIGHT as usize] = [
