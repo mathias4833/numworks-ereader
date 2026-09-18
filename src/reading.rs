@@ -14,7 +14,7 @@ pub struct ReadingState {
 
 impl ReadingState {
     pub fn new(book_count: usize) -> Option<Self> {
-        if book_count == 0 {
+        if book_count == 0 || book_count > MAX_BOOKS {
             return None;
         }
         let progress = (0..book_count).map(|_| BookProgress::default()).collect();

@@ -10,11 +10,11 @@ pub(crate) fn read_u32(data: &[u8], offset: usize) -> Option<u32> {
     Some(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
 }
 
-pub(crate) struct Offsets<'a> {
+pub(crate) struct OffsetTable<'a> {
     data: &'a [u8],
 }
 
-impl<'a> Offsets<'a> {
+impl<'a> OffsetTable<'a> {
     pub fn read(reader: &mut Reader<'a>, count: usize) -> Option<Self> {
         let len = count.checked_add(1)?.checked_mul(size_of::<u32>())?;
 

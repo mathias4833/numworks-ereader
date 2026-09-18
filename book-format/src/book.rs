@@ -1,11 +1,11 @@
-use crate::utils::{Offsets, Reader};
+use crate::utils::{OffsetTable, Reader};
 use crate::{BOOK_MAGIC, COVER_BYTE_LEN, ParseError, VERSION};
 
 pub struct Book<'a> {
     title: &'a str,
     cover: &'a [u8],
-    page_offsets: Offsets<'a>,
-    pages: &'a str,
+    page_offsets: OffsetTable<'a>,
+    pages: &'a [u8],
 }
 
 impl<'a> Book<'a> {
@@ -31,14 +31,13 @@ impl<'a> Book<'a> {
         let cover = reader.take(COVER_BYTE_LEN).ok_or(ParseError::TooShort)?;
 
         let page_offsets =
-            Offsets::read(&mut reader, page_count).ok_or(ParseError::InvalidPageOffsets)?;
-        let pages = str::from_utf8(reader.remaining()).map_err(|_| ParseError::InvalidPageData)?;
+            OffsetTable::read(&mut reader, page_count).ok_or(ParseError::InvalidPageOffsets)?;
 
         Ok(Self {
             title,
             cover,
             page_offsets,
-            pages,
+            pages: reader.remaining(),
         })
     }
 
@@ -56,7 +55,7 @@ impl<'a> Book<'a> {
 
     pub fn page(&self, index: usize) -> Option<Page<'a>> {
         let range = self.page_offsets.range(index)?;
-        let text = self.pages.get(range)?;
+        let text = str::from_utf8(self.pages.get(range)?).ok()?;
 
         Some(Page { text })
     }

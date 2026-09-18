@@ -1,8 +1,8 @@
-use crate::utils::{Offsets, Reader};
+use crate::utils::{OffsetTable, Reader};
 use crate::{Book, LIBRARY_MAGIC, ParseError, VERSION};
 
 pub struct Library<'a> {
-    book_offsets: Offsets<'a>,
+    book_offsets: OffsetTable<'a>,
     books: &'a [u8],
 }
 
@@ -24,7 +24,7 @@ impl<'a> Library<'a> {
 
         let book_count = reader.u32().ok_or(ParseError::TooShort)? as usize;
         let book_offsets =
-            Offsets::read(&mut reader, book_count).ok_or(ParseError::InvalidBookOffsets)?;
+            OffsetTable::read(&mut reader, book_count).ok_or(ParseError::InvalidBookOffsets)?;
 
         let books = reader.remaining();
 
