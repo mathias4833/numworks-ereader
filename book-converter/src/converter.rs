@@ -1,5 +1,8 @@
+use crate::epub::EpubBook;
 use book_format::BookBuilder;
+use book_format::{COVER_BYTE_LEN, COVER_HEIGHT, COVER_WIDTH};
 use deunicode::deunicode;
+use image::imageops::FilterType;
 
 pub struct Converter {
     chars_per_line: usize,
@@ -14,21 +17,29 @@ impl Converter {
         }
     }
 
-    pub fn convert(&self, title: String, text: &str) -> BookBuilder {
-        let text = deunicode(text).replace("\r\n", "\n");
-        let pages = self.paginate(&text);
-
-        BookBuilder::new(title, pages)
+    pub fn convert(&self, book: &EpubBook) -> BookBuilder {
+        let pages = self.paginate(&book.text);
+        let builder = BookBuilder::new(deunicode(&book.title), pages);
+        match book
+            .cover
+            .as_deref()
+            .and_then(|bytes| image::load_from_memory(bytes).ok())
+        {
+            Some(image) => builder.with_cover(convert_cover(image)),
+            None => builder,
+        }
     }
 
     fn paginate(&self, text: &str) -> Vec<String> {
         let mut lines = Vec::new();
 
-        for paragraph in text.split("\n\n").filter(|p| !p.trim().is_empty()) {
-            self.wrap_paragraph(paragraph, &mut lines);
-
-            if !lines.is_empty() {
-                lines.push(String::new());
+        for line in text.lines() {
+            if line.trim().is_empty() {
+                if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
+                    lines.push(String::new());
+                }
+            } else {
+                self.wrap_paragraph(&deunicode(line), &mut lines);
             }
         }
 
@@ -63,4 +74,26 @@ impl Converter {
             lines.push(current_line);
         }
     }
+}
+
+fn convert_cover(image: image::DynamicImage) -> [u8; COVER_BYTE_LEN] {
+    let image = image
+        .resize(
+            COVER_WIDTH as u32,
+            COVER_HEIGHT as u32,
+            FilterType::Lanczos3,
+        )
+        .to_rgb8();
+    let mut cover = [0; COVER_BYTE_LEN];
+    let left = (COVER_WIDTH as u32 - image.width()) / 2;
+    let top = (COVER_HEIGHT as u32 - image.height()) / 2;
+
+    for (x, y, pixel) in image.enumerate_pixels() {
+        let [red, green, blue] = pixel.0;
+        let rgb565 = ((red as u16 >> 3) << 11) | ((green as u16 >> 2) << 5) | (blue as u16 >> 3);
+        let offset = (((y + top) as usize * COVER_WIDTH) + (x + left) as usize) * 2;
+        cover[offset..offset + 2].copy_from_slice(&rgb565.to_le_bytes());
+    }
+
+    cover
 }

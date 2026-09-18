@@ -1,6 +1,8 @@
 mod converter;
+mod epub;
 
 use crate::converter::Converter;
+use crate::epub::EpubBook;
 use book_format::LibraryBuilder;
 use std::path::Path;
 use std::{env, fs};
@@ -11,7 +13,7 @@ const LINES_PER_PAGE: usize = 11;
 fn main() {
     let inputs: Vec<String> = env::args().skip(1).collect();
     if inputs.is_empty() {
-        eprintln!("Usage: library-converter <book1.txt> <book2.txt> ...");
+        eprintln!("Usage: book-converter <book1.epub> <book2.epub> ...");
         std::process::exit(1);
     }
 
@@ -19,17 +21,7 @@ fn main() {
 
     let books = inputs
         .iter()
-        .map(|input| {
-            let text = fs::read_to_string(input).expect("failed to read input");
-
-            let title = Path::new(input)
-                .file_stem()
-                .unwrap()
-                .to_string_lossy()
-                .into_owned();
-
-            converter.convert(title, &text)
-        })
+        .map(|input| converter.convert(&EpubBook::open(Path::new(input))))
         .collect();
 
     let library = LibraryBuilder::new(books);

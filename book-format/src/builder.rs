@@ -8,11 +8,21 @@ const DEFAULT_COVER: &[u8; COVER_BYTE_LEN] = include_bytes!("../../assets/defaul
 pub struct BookBuilder {
     title: String,
     pages: Vec<String>,
+    cover: Option<[u8; COVER_BYTE_LEN]>,
 }
 
 impl BookBuilder {
     pub fn new(title: String, pages: Vec<String>) -> Self {
-        Self { title, pages }
+        Self {
+            title,
+            pages,
+            cover: None,
+        }
+    }
+
+    pub fn with_cover(mut self, cover: [u8; COVER_BYTE_LEN]) -> Self {
+        self.cover = Some(cover);
+        self
     }
 
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
@@ -28,7 +38,7 @@ impl BookBuilder {
         writer.u32(self.title.len())?;
 
         writer.bytes(self.title.as_bytes());
-        writer.bytes(DEFAULT_COVER);
+        writer.bytes(self.cover.as_ref().unwrap_or(DEFAULT_COVER));
 
         writer.indexed(&self.pages, |writer, page| {
             writer.bytes(page.as_bytes());

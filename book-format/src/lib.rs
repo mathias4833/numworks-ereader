@@ -13,7 +13,7 @@ const VERSION: u16 = 1;
 
 pub const COVER_WIDTH: usize = 60;
 pub const COVER_HEIGHT: usize = 90;
-const COVER_BYTE_LEN: usize = COVER_WIDTH * COVER_HEIGHT * 2;
+pub const COVER_BYTE_LEN: usize = COVER_WIDTH * COVER_HEIGHT * 2;
 
 #[derive(Debug)]
 pub enum ParseError {

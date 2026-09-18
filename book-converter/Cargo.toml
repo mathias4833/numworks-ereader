@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 book-format = { path = "../book-format", features = ["std"] }
 deunicode = "1.6.2"
+epub = "2.1.5"
+html2text = "0.17.1"
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
