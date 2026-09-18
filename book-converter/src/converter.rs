@@ -18,7 +18,11 @@ impl Converter {
     }
 
     pub fn convert(&self, book: &EpubBook) -> BookBuilder {
-        let pages = self.paginate(&book.text);
+        let pages = book
+            .chapters
+            .iter()
+            .flat_map(|chapter| self.paginate(chapter))
+            .collect();
         let builder = BookBuilder::new(deunicode(&book.title), pages);
         match book
             .cover

@@ -3,7 +3,7 @@ use std::path::Path;
 
 pub struct EpubBook {
     pub title: String,
-    pub text: String,
+    pub chapters: Vec<String>,
     pub cover: Option<Vec<u8>>,
 }
 
@@ -33,8 +33,10 @@ impl EpubBook {
             }
         }
 
-        let text = chapters.join("\n\n");
-
-        Self { title, text, cover }
+        Self {
+            title,
+            chapters,
+            cover,
+        }
     }
 }
