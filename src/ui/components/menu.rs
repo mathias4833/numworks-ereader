@@ -66,13 +66,23 @@ pub struct MenuView<'a> {
 }
 
 impl MenuView<'_> {
+    fn first_visible(&self) -> usize {
+        let capacity = self.layout.capacity().max(1);
+        self.menu.selected.saturating_sub(capacity - 1)
+    }
+}
+
+impl MenuView<'_> {
     pub fn draw_with<D, F>(&self, display: &mut D, mut draw_item: F) -> Result<(), D::Error>
     where
         D: DrawTarget<Color = Rgb565>,
         F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
     {
-        for index in 0..self.menu.item_count {
-            let Some(area) = self.layout.item_rect(index) else {
+        let first_visible = self.first_visible();
+
+        for index in first_visible..self.menu.item_count {
+            let slot = index - first_visible;
+            let Some(area) = self.layout.item_rect(slot) else {
                 continue;
             };
 

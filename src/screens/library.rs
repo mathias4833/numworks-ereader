@@ -31,7 +31,7 @@ impl Screen for LibraryScreen {
     {
         let frame = Frame::new(SCREEN)
             .with_status_bar(24)
-            .with_padding(Insets::new(8, 3, 8, 3));
+            .with_padding(Insets::new(8, 3, 0, 3));
 
         SCREEN
             .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
