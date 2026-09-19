@@ -62,11 +62,15 @@ impl ReadingState {
         true
     }
 
-    pub fn progress_percent(&self, page_count: usize) -> usize {
-        if page_count == 0 {
+    pub fn progress_percent_for(&self, book_index: usize, page_count: usize) -> usize {
+        if page_count == 0 || book_index >= self.progress.len() {
             return 0;
         }
 
-        (self.current_page() + 1) * 100 / page_count
+        (self.progress[book_index].page_index + 1) * 100 / page_count
+    }
+
+    pub fn progress_percent(&self, page_count: usize) -> usize {
+        self.progress_percent_for(self.current_book, page_count)
     }
 }

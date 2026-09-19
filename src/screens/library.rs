@@ -1,6 +1,7 @@
 use crate::app::AppAction;
 use crate::eadk::event::Event;
 use crate::screens::{Screen, ScreenContext};
+use crate::ui::components::book_card::BookCard;
 use crate::ui::components::menu::Menu;
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
@@ -10,32 +11,15 @@ use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{Primitive, RgbColor};
 use embedded_graphics::primitives::PrimitiveStyle;
-use heapless::Vec;
-
-const MAX_BOOKS: usize = 32;
 
 pub struct LibraryScreen {
-    menu: Menu<Vec<&'static str, MAX_BOOKS>>,
+    menu: Menu,
 }
 
 impl LibraryScreen {
     pub fn new(library: &Library<'static>, selected: usize) -> Self {
-        let mut items = Vec::new();
-        for index in 0..library.book_count() {
-            let title = library
-                .book(index)
-                .ok()
-                .flatten()
-                .map(|book| book.title())
-                .unwrap_or("Invalid");
-
-            if items.push(title).is_err() {
-                break;
-            }
-        }
-
         Self {
-            menu: Menu::with_selected(items, selected),
+            menu: Menu::with_selected(library.book_count(), selected),
         }
     }
 }
@@ -57,8 +41,20 @@ impl Screen for LibraryScreen {
             .with_battery(ctx.battery)
             .draw(display)?;
 
-        let layout = Stack::vertical(frame.content(), 22, 4);
-        self.menu.view(layout).draw(display)?;
+        let layout = Stack::vertical(frame.content(), BookCard::HEIGHT, 4);
+        self.menu.view(layout).draw_with(display, |display, slot| {
+            let Ok(Some(book)) = ctx.library.book(slot.index) else {
+                return Ok(());
+            };
+
+            let progress = ctx
+                .reading
+                .progress_percent_for(slot.index, book.page_count());
+
+            BookCard::new(slot.area, &book, progress)
+                .selected(slot.selected)
+                .draw(display)
+        })?;
 
         Ok(())
     }

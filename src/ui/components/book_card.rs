@@ -16,6 +16,7 @@ pub struct BookCard<'a> {
     book: &'a Book<'a>,
     progress: usize,
     label: Option<&'a str>,
+    selected: bool,
 }
 
 impl<'a> BookCard<'a> {
@@ -27,11 +28,17 @@ impl<'a> BookCard<'a> {
             book,
             progress,
             label: None,
+            selected: false,
         }
     }
 
     pub const fn with_label(mut self, label: &'a str) -> Self {
         self.label = Some(label);
+        self
+    }
+
+    pub const fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
         self
     }
 }
@@ -44,9 +51,20 @@ impl<'a> Drawable for BookCard<'a> {
     where
         D: DrawTarget<Color = Rgb565>,
     {
-        // Fill the background in gray
+        let background = if self.selected {
+            Rgb565::BLACK
+        } else {
+            // Gray
+            Rgb565::new(26, 52, 26)
+        };
+        let foreground = if self.selected {
+            Rgb565::WHITE
+        } else {
+            Rgb565::BLACK
+        };
+
         self.area
-            .into_styled(PrimitiveStyle::with_fill(Rgb565::new(26, 52, 26)))
+            .into_styled(PrimitiveStyle::with_fill(background))
             .draw(display)?;
 
         let cover = Rectangle::new(
@@ -65,7 +83,7 @@ impl<'a> Drawable for BookCard<'a> {
             Text::with_text_style(
                 label,
                 self.area.top_left + Point::new(80, 32),
-                MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
+                MonoTextStyle::new(&FONT_7X14, foreground),
                 TextStyleBuilder::new()
                     .alignment(Alignment::Left)
                     .baseline(Baseline::Middle)
@@ -78,7 +96,7 @@ impl<'a> Drawable for BookCard<'a> {
         Text::with_text_style(
             self.book.title(),
             self.area.top_left + Point::new(80, title_y),
-            MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
+            MonoTextStyle::new(&FONT_7X14, foreground),
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
                 .baseline(Baseline::Middle)
@@ -92,7 +110,7 @@ impl<'a> Drawable for BookCard<'a> {
         Text::with_text_style(
             progress.as_str(),
             self.area.top_left + Point::new(self.area.size.width as i32 - 12, 12),
-            MonoTextStyle::new(&FONT_7X14, Rgb565::BLACK),
+            MonoTextStyle::new(&FONT_7X14, foreground),
             TextStyleBuilder::new()
                 .alignment(Alignment::Right)
                 .baseline(Baseline::Middle)

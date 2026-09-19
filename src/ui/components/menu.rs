@@ -1,34 +1,35 @@
+use crate::ui::icons::{Icon, IconView};
 use crate::ui::layout::Stack;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::mono_font::MonoTextStyle;
 use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::*;
+use embedded_graphics::prelude::{Point, Primitive, RgbColor, Size};
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 
-pub struct Menu<I>
-where
-    I: AsRef<[&'static str]>,
-{
-    items: I,
+pub struct Menu {
+    item_count: usize,
     selected: usize,
 }
 
-impl<I> Menu<I>
-where
-    I: AsRef<[&'static str]>,
-{
-    pub const fn new(items: I) -> Self {
-        Self { items, selected: 0 }
+impl Menu {
+    pub const fn new(item_count: usize) -> Self {
+        Self {
+            item_count,
+            selected: 0,
+        }
     }
 
-    pub const fn with_selected(items: I, selected: usize) -> Self {
-        Self { items, selected }
+    pub const fn with_selected(item_count: usize, selected: usize) -> Self {
+        Self {
+            item_count,
+            selected,
+        }
     }
 
-    pub fn selected(&self) -> usize {
+    pub const fn selected(&self) -> usize {
         self.selected
     }
 
@@ -39,88 +40,112 @@ where
     }
 
     pub fn move_down(&mut self) -> bool {
-        if self.items.as_ref().is_empty() {
+        if self.item_count == 0 {
             return false;
         }
 
         let previous = self.selected;
-        self.selected = (self.selected + 1).min(self.items.as_ref().len() - 1);
+        self.selected = (self.selected + 1).min(self.item_count - 1);
         self.selected != previous
     }
 
-    pub fn view(&self, layout: Stack) -> MenuView<'_, I> {
-        MenuView {
-            menu: self,
-            layout,
-            text_left_padding: 8,
-        }
+    pub const fn view(&self, layout: Stack) -> MenuView<'_> {
+        MenuView { menu: self, layout }
     }
 }
 
-pub struct MenuView<'a, I>
-where
-    I: AsRef<[&'static str]>,
-{
-    menu: &'a Menu<I>,
-    layout: Stack,
-    text_left_padding: i32,
+pub struct MenuSlot {
+    pub index: usize,
+    pub area: Rectangle,
+    pub selected: bool,
 }
 
-impl<I> MenuView<'_, I>
-where
-    I: AsRef<[&'static str]>,
-{
-    pub const fn with_text_left_padding(mut self, padding: i32) -> Self {
-        self.text_left_padding = padding;
+pub struct MenuView<'a> {
+    menu: &'a Menu,
+    layout: Stack,
+}
+
+impl MenuView<'_> {
+    pub fn draw_with<D, F>(&self, display: &mut D, mut draw_item: F) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = Rgb565>,
+        F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
+    {
+        for index in 0..self.menu.item_count {
+            let Some(area) = self.layout.item_rect(index) else {
+                continue;
+            };
+
+            draw_item(
+                display,
+                MenuSlot {
+                    index,
+                    area,
+                    selected: index == self.menu.selected,
+                },
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
+pub struct MenuRow<'a> {
+    area: Rectangle,
+    text: &'a str,
+    icon: Icon,
+    selected: bool,
+}
+
+impl<'a> MenuRow<'a> {
+    pub const fn new(area: Rectangle, text: &'a str, icon: Icon) -> Self {
+        Self {
+            area,
+            text,
+            icon,
+            selected: false,
+        }
+    }
+
+    pub const fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
         self
     }
 }
 
-impl<I> Drawable for MenuView<'_, I>
-where
-    I: AsRef<[&'static str]>,
-{
+impl Drawable for MenuRow<'_> {
     type Color = Rgb565;
     type Output = ();
 
-    fn draw<D>(&self, display: &mut D) -> Result<Self::Output, D::Error>
+    fn draw<D>(&self, display: &mut D) -> Result<(), D::Error>
     where
-        D: DrawTarget<Color = Self::Color>,
+        D: DrawTarget<Color = Rgb565>,
     {
-        for (index, item) in self.menu.items.as_ref().iter().enumerate() {
-            let Some(area) = self.layout.item_rect(index) else {
-                continue;
-            };
-            let selected = index == self.menu.selected;
+        let foreground = if self.selected {
+            Rgb565::WHITE
+        } else {
+            Rgb565::BLACK
+        };
 
-            let background = if selected {
-                Rgb565::BLACK
-            } else {
-                Rgb565::WHITE
-            };
-            let foreground = if selected {
-                Rgb565::WHITE
-            } else {
-                Rgb565::BLACK
-            };
-
-            if selected {
-                Rectangle::new(area.top_left, area.size)
-                    .into_styled(PrimitiveStyle::with_fill(background))
-                    .draw(display)?;
-            }
-
-            Text::with_text_style(
-                item,
-                Point::new(area.top_left.x + self.text_left_padding, area.center().y),
-                MonoTextStyle::new(&FONT_7X14, foreground),
-                TextStyleBuilder::new()
-                    .alignment(Alignment::Left)
-                    .baseline(Baseline::Middle)
-                    .build(),
-            )
-            .draw(display)?;
+        if self.selected {
+            self.area
+                .into_styled(PrimitiveStyle::with_fill(Rgb565::BLACK))
+                .draw(display)?;
         }
+
+        let icon_area = Rectangle::new(self.area.top_left + Point::new(6, 5), Size::new(13, 12));
+        IconView::new(self.icon, icon_area, foreground).draw(display)?;
+
+        Text::with_text_style(
+            self.text,
+            Point::new(self.area.top_left.x + 28, self.area.center().y),
+            MonoTextStyle::new(&FONT_7X14, foreground),
+            TextStyleBuilder::new()
+                .alignment(Alignment::Left)
+                .baseline(Baseline::Middle)
+                .build(),
+        )
+        .draw(display)?;
 
         Ok(())
     }

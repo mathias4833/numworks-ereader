@@ -49,7 +49,7 @@ impl Stack {
             ),
         };
 
-        if self.area.intersection(&rect) != rect {
+        if self.area.intersection(&rect).size == Size::zero() {
             return None;
         }
 
