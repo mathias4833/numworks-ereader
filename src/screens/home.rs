@@ -9,10 +9,9 @@ use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
 use crate::ui::theme;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
+use embedded_graphics::primitives::PrimitiveStyle;
 
-static HOME_ITEMS: [&str; 3] = ["Open reader", "Library", "Settings"];
-static HOME_ICONS: [Icon; 3] = [Icon::Book, Icon::Folder, Icon::Settings];
+static HOME_ITEMS: [(&str, Icon); 2] = [("Library", Icon::Folder), ("Settings", Icon::Settings)];
 
 pub struct HomeScreen {
     menu: Menu,
@@ -21,7 +20,7 @@ pub struct HomeScreen {
 impl HomeScreen {
     pub const fn new() -> Self {
         Self {
-            menu: Menu::new(HOME_ITEMS.len()),
+            menu: Menu::new(HOME_ITEMS.len() + 1),
         }
     }
 }
@@ -43,11 +42,8 @@ impl Screen for HomeScreen {
             .with_battery(ctx.battery)
             .draw(display)?;
 
-        let content = frame.content();
-        let book_panel = Rectangle::new(
-            content.top_left,
-            Size::new(content.size.width, BookCard::HEIGHT),
-        );
+        let mut layout = Stack::vertical(frame.content(), 8);
+        let book_panel = layout.next(BookCard::HEIGHT);
 
         if let Ok(Some(book)) = ctx.library.book(ctx.reading.current_book()) {
             BookCard::new(
@@ -56,29 +52,15 @@ impl Screen for HomeScreen {
                 ctx.reading.progress_percent(book.page_count()),
             )
             .with_label("Current book")
+            .selected(self.menu.selected() == 0)
             .draw(display)?;
         }
 
-        let menu_top = content.top_left.y + book_panel.size.height as i32 + 8;
-        let menu_area = Rectangle::new(
-            Point::new(content.top_left.x, menu_top),
-            Size::new(
-                content.size.width,
-                content
-                    .size
-                    .height
-                    .saturating_sub(book_panel.size.height + 8),
-            ),
-        );
-
-        let menu_layout = Stack::vertical(menu_area, MenuRow::HEIGHT, 5);
-        self.menu
-            .view(menu_layout)
-            .draw_with(display, |display, slot| {
-                MenuRow::new(slot.area, HOME_ITEMS[slot.index], HOME_ICONS[slot.index])
-                    .selected(slot.selected)
-                    .draw(display)
-            })?;
+        for (index, &(label, icon)) in HOME_ITEMS.iter().enumerate() {
+            MenuRow::new(layout.next(MenuRow::HEIGHT), label, icon)
+                .selected(self.menu.selected() == index + 1)
+                .draw(display)?;
+        }
 
         Ok(())
     }

@@ -9,7 +9,6 @@ const ICON_HEIGHT: u32 = 12;
 
 #[derive(Clone, Copy)]
 pub enum Icon {
-    Book,
     Folder,
     Settings,
 }
@@ -63,26 +62,10 @@ const fn bit_at(x: u32) -> u16 {
 
 fn bitmap_for(icon: Icon) -> &'static [u16; ICON_HEIGHT as usize] {
     match icon {
-        Icon::Book => &BOOK,
         Icon::Folder => &FOLDER,
         Icon::Settings => &SETTINGS,
     }
 }
-
-const BOOK: [u16; ICON_HEIGHT as usize] = [
-    0b0011111110000,
-    0b0010000010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010100010000,
-    0b0010000010000,
-    0b0011111110000,
-];
 
 const FOLDER: [u16; ICON_HEIGHT as usize] = [
     0b0000000000000,

@@ -42,20 +42,22 @@ impl Screen for LibraryScreen {
             .with_battery(ctx.battery)
             .draw(display)?;
 
-        let layout = Stack::vertical(frame.content(), BookCard::HEIGHT, 4);
-        self.menu.view(layout).draw_with(display, |display, slot| {
-            let Ok(Some(book)) = ctx.library.book(slot.index) else {
-                return Ok(());
-            };
+        let layout = Stack::vertical(frame.content(), 4);
+        self.menu
+            .view(layout, BookCard::HEIGHT)
+            .draw_with(display, |display, slot| {
+                let Ok(Some(book)) = ctx.library.book(slot.index) else {
+                    return Ok(());
+                };
 
-            let progress = ctx
-                .reading
-                .progress_percent_for(slot.index, book.page_count());
+                let progress = ctx
+                    .reading
+                    .progress_percent_for(slot.index, book.page_count());
 
-            BookCard::new(slot.area, &book, progress)
-                .selected(slot.selected)
-                .draw(display)
-        })?;
+                BookCard::new(slot.area, &book, progress)
+                    .selected(slot.selected)
+                    .draw(display)
+            })?;
 
         Ok(())
     }

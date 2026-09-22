@@ -48,8 +48,12 @@ impl Menu {
         self.selected != previous
     }
 
-    pub const fn view(&self, layout: Stack) -> MenuView<'_> {
-        MenuView { menu: self, layout }
+    pub const fn view(&self, layout: Stack, item_size: u32) -> MenuView<'_> {
+        MenuView {
+            menu: self,
+            layout,
+            item_size,
+        }
     }
 }
 
@@ -62,11 +66,12 @@ pub struct MenuSlot {
 pub struct MenuView<'a> {
     menu: &'a Menu,
     layout: Stack,
+    item_size: u32,
 }
 
 impl MenuView<'_> {
     fn first_visible(&self) -> usize {
-        let capacity = self.layout.capacity().max(1);
+        let capacity = self.layout.capacity(self.item_size).max(1);
         self.menu.selected.saturating_sub(capacity - 1)
     }
 }
@@ -78,12 +83,11 @@ impl MenuView<'_> {
         F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
     {
         let first_visible = self.first_visible();
+        let capacity = self.layout.capacity(self.item_size);
+        let mut layout = self.layout;
 
-        for index in first_visible..self.menu.item_count {
-            let slot = index - first_visible;
-            let Some(area) = self.layout.item_rect(slot) else {
-                continue;
-            };
+        for index in (first_visible..self.menu.item_count).take(capacity) {
+            let area = layout.next(self.item_size);
 
             draw_item(
                 display,

@@ -29,15 +29,6 @@ impl Insets {
         }
     }
 
-    pub const fn symmetric(vertical: u32, horizontal: u32) -> Self {
-        Self {
-            top: vertical,
-            right: horizontal,
-            bottom: vertical,
-            left: horizontal,
-        }
-    }
-
     pub const fn apply(self, area: Rectangle) -> Rectangle {
         Rectangle::new(
             Point::new(
