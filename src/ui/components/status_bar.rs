@@ -1,6 +1,5 @@
 use crate::ui::components::battery::BatteryState;
-use embedded_graphics::mono_font::ascii::FONT_9X18;
-use embedded_graphics::mono_font::MonoTextStyle;
+use crate::ui::theme;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
@@ -13,6 +12,8 @@ pub struct StatusBar<'a> {
 }
 
 impl<'a> StatusBar<'a> {
+    pub const HEIGHT: u32 = 24;
+
     pub const fn new(area: Rectangle, title: &'a str) -> Self {
         Self {
             area,
@@ -36,7 +37,7 @@ impl<'a> Drawable for StatusBar<'a> {
         D: DrawTarget<Color = Self::Color>,
     {
         self.area
-            .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
+            .into_styled(PrimitiveStyle::with_fill(theme::BACKGROUND))
             .draw(display)?;
 
         let bottom = self.area.top_left.y + self.area.size.height as i32 - 1;
@@ -45,10 +46,10 @@ impl<'a> Drawable for StatusBar<'a> {
             Point::new(self.area.top_left.x, bottom),
             Point::new(self.area.top_left.x + self.area.size.width as i32, bottom),
         )
-        .into_styled(PrimitiveStyle::with_stroke(Rgb565::BLACK, 1))
+        .into_styled(PrimitiveStyle::with_stroke(theme::FOREGROUND, 1))
         .draw(display)?;
 
-        let style = MonoTextStyle::new(&FONT_9X18, Rgb565::BLACK);
+        let style = theme::title(theme::FOREGROUND);
 
         Text::with_text_style(
             self.title,

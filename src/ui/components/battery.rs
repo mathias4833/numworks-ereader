@@ -1,6 +1,7 @@
 use crate::eadk;
 use crate::eadk::battery::BatteryLevel;
 use crate::eadk::event::Event;
+use crate::ui::theme;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle, RoundedRectangle};
@@ -144,7 +145,7 @@ impl BatteryView<'_> {
         D: DrawTarget<Color = Rgb565>,
     {
         RoundedRectangle::with_equal_corners(self.body(), Size::new(2, 2))
-            .into_styled(PrimitiveStyle::with_stroke(Rgb565::BLACK, 1))
+            .into_styled(PrimitiveStyle::with_stroke(theme::FOREGROUND, 1))
             .draw(display)?;
 
         Ok(())
@@ -163,7 +164,7 @@ impl BatteryView<'_> {
             ),
             Size::new(2, body.size.height / 3),
         )
-        .into_styled(PrimitiveStyle::with_fill(Rgb565::BLACK))
+        .into_styled(PrimitiveStyle::with_fill(theme::FOREGROUND))
         .draw(display)?;
 
         Ok(())
@@ -178,7 +179,7 @@ impl BatteryView<'_> {
         let center_x = inner.top_left.x + inner.size.width as i32 / 2;
         let center_y = inner.top_left.y + inner.size.height as i32 / 2;
 
-        let style = PrimitiveStyle::with_stroke(Rgb565::BLACK, 1);
+        let style = PrimitiveStyle::with_stroke(theme::FOREGROUND, 1);
 
         // Small lightning bolt.
         Line::new(
@@ -208,8 +209,8 @@ impl BatteryView<'_> {
 
 fn color_for_level(level: BatteryLevel) -> Rgb565 {
     match level {
-        BatteryLevel::Empty | BatteryLevel::Low => Rgb565::RED,
-        BatteryLevel::Percent40 => Rgb565::YELLOW,
-        BatteryLevel::Percent60 | BatteryLevel::Percent80 | BatteryLevel::Full => Rgb565::GREEN,
+        BatteryLevel::Empty | BatteryLevel::Low => theme::DANGER,
+        BatteryLevel::Percent40 => theme::WARNING,
+        BatteryLevel::Percent60 | BatteryLevel::Percent80 | BatteryLevel::Full => theme::SUCCESS,
     }
 }

@@ -6,6 +6,7 @@ use crate::ui::components::menu::{Menu, MenuRow};
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::icons::Icon;
 use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
+use crate::ui::theme;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
@@ -31,11 +32,11 @@ impl Screen for HomeScreen {
         D: DrawTarget<Color = Rgb565>,
     {
         let frame = Frame::new(SCREEN)
-            .with_status_bar(24)
+            .with_status_bar(StatusBar::HEIGHT)
             .with_padding(Insets::all(8));
 
         SCREEN
-            .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
+            .into_styled(PrimitiveStyle::with_fill(theme::BACKGROUND))
             .draw(display)?;
 
         StatusBar::new(frame.status_bar(), "NumWorks Reader")
@@ -70,7 +71,7 @@ impl Screen for HomeScreen {
             ),
         );
 
-        let menu_layout = Stack::vertical(menu_area, 22, 5);
+        let menu_layout = Stack::vertical(menu_area, MenuRow::HEIGHT, 5);
         self.menu
             .view(menu_layout)
             .draw_with(display, |display, slot| {

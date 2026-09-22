@@ -5,11 +5,12 @@ use crate::ui::components::book_card::BookCard;
 use crate::ui::components::menu::Menu;
 use crate::ui::components::status_bar::StatusBar;
 use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
+use crate::ui::theme;
 use book_format::Library;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::{Primitive, RgbColor};
+use embedded_graphics::prelude::Primitive;
 use embedded_graphics::primitives::PrimitiveStyle;
 
 pub struct LibraryScreen {
@@ -30,11 +31,11 @@ impl Screen for LibraryScreen {
         D: DrawTarget<Color = Rgb565>,
     {
         let frame = Frame::new(SCREEN)
-            .with_status_bar(24)
+            .with_status_bar(StatusBar::HEIGHT)
             .with_padding(Insets::new(8, 3, 0, 3));
 
         SCREEN
-            .into_styled(PrimitiveStyle::with_fill(Rgb565::WHITE))
+            .into_styled(PrimitiveStyle::with_fill(theme::BACKGROUND))
             .draw(display)?;
 
         StatusBar::new(frame.status_bar(), "Library")

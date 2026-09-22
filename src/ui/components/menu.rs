@@ -1,11 +1,10 @@
 use crate::ui::icons::{Icon, IconView};
 use crate::ui::layout::Stack;
+use crate::ui::theme;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
-use embedded_graphics::mono_font::MonoTextStyle;
-use embedded_graphics::mono_font::jis_x0201::FONT_7X14;
 use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::{Point, Primitive, RgbColor, Size};
+use embedded_graphics::prelude::{Point, Primitive, Size};
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 
@@ -108,6 +107,8 @@ pub struct MenuRow<'a> {
 }
 
 impl<'a> MenuRow<'a> {
+    pub const HEIGHT: u32 = 22;
+
     pub const fn new(area: Rectangle, text: &'a str, icon: Icon) -> Self {
         Self {
             area,
@@ -132,14 +133,14 @@ impl Drawable for MenuRow<'_> {
         D: DrawTarget<Color = Rgb565>,
     {
         let foreground = if self.selected {
-            Rgb565::WHITE
+            theme::SELECTED_FOREGROUND
         } else {
-            Rgb565::BLACK
+            theme::FOREGROUND
         };
 
         if self.selected {
             self.area
-                .into_styled(PrimitiveStyle::with_fill(Rgb565::BLACK))
+                .into_styled(PrimitiveStyle::with_fill(theme::SELECTED_BACKGROUND))
                 .draw(display)?;
         }
 
@@ -149,7 +150,7 @@ impl Drawable for MenuRow<'_> {
         Text::with_text_style(
             self.text,
             Point::new(self.area.top_left.x + 28, self.area.center().y),
-            MonoTextStyle::new(&FONT_7X14, foreground),
+            theme::text(foreground),
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
                 .baseline(Baseline::Middle)
