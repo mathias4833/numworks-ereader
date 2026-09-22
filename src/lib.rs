@@ -1,7 +1,5 @@
 #![cfg_attr(target_os = "none", no_std)]
 
-use crate::app::App;
-
 pub mod app;
 pub mod eadk;
 mod metadata;
@@ -16,5 +14,7 @@ mod panic;
 #[cfg(not(target_os = "none"))]
 #[unsafe(no_mangle)]
 pub extern "C" fn main(_argc: i32, _argv: *const *const u8) -> i32 {
+    use crate::app::App;
+
     App::new().run();
 }

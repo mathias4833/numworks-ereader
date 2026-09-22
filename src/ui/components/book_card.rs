@@ -1,4 +1,5 @@
 use book_format::{Book, COVER_HEIGHT, COVER_WIDTH};
+use core::fmt::Write;
 use embedded_graphics::Drawable;
 use embedded_graphics::geometry::{Point, Size};
 use embedded_graphics::mono_font::MonoTextStyle;
@@ -9,7 +10,6 @@ use embedded_graphics::prelude::{DrawTarget, Primitive, RgbColor};
 use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use heapless::String;
-use std::fmt::Write;
 
 pub struct BookCard<'a> {
     area: Rectangle,
