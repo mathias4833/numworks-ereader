@@ -15,4 +15,5 @@ crate-type = ["cdylib", "rlib"]
 book-format = { path = "book-format" }
 num_enum = { version = "0.7.6", default-features = false }
 embedded-graphics = "0.8.2"
+u8g2-fonts = { version = "0.8.0", features = ["embedded_graphics_textstyle"] }
 heapless = { version = "0.9.3", default-features = false }

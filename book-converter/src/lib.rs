@@ -6,8 +6,8 @@ use converter::Converter;
 use epub::EpubBook;
 use std::path::PathBuf;
 
-const CHARS_PER_LINE: usize = 44;
-const LINES_PER_PAGE: usize = 11;
+const CHARS_PER_LINE: usize = 39;
+const LINES_PER_PAGE: usize = 13;
 
 pub struct LibraryConverter {
     converter: Converter,

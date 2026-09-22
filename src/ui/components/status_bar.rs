@@ -49,7 +49,7 @@ impl<'a> Drawable for StatusBar<'a> {
         .into_styled(PrimitiveStyle::with_stroke(theme::FOREGROUND, 1))
         .draw(display)?;
 
-        let style = theme::title(theme::FOREGROUND);
+        let style = theme::text(theme::FOREGROUND);
 
         Text::with_text_style(
             self.title,

@@ -6,7 +6,7 @@ use embedded_graphics::geometry::{Point, Size};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::pixelcolor::raw::RawU16;
 use embedded_graphics::prelude::{DrawTarget, Primitive};
-use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle, RoundedRectangle};
+use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use heapless::String;
 
@@ -50,20 +50,8 @@ impl<'a> Drawable for BookCard<'a> {
     where
         D: DrawTarget<Color = Rgb565>,
     {
-        let (background, border) = if self.selected {
-            (theme::SURFACE_SELECTED, theme::BORDER_SELECTED)
-        } else {
-            (theme::SURFACE, theme::BORDER)
-        };
-
-        RoundedRectangle::with_equal_corners(self.area, Size::new(8, 8))
-            .into_styled(
-                PrimitiveStyleBuilder::new()
-                    .fill_color(background)
-                    .stroke_color(border)
-                    .stroke_width(1)
-                    .build(),
-            )
+        RoundedRectangle::with_equal_corners(self.area, theme::CORNER_RADIUS)
+            .into_styled(theme::surface(self.selected))
             .draw(display)?;
 
         let cover = Rectangle::new(
@@ -95,7 +83,7 @@ impl<'a> Drawable for BookCard<'a> {
         Text::with_text_style(
             self.book.title(),
             self.area.top_left + Point::new(80, title_y),
-            theme::title(theme::FOREGROUND),
+            theme::text(theme::FOREGROUND),
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
                 .baseline(Baseline::Middle)

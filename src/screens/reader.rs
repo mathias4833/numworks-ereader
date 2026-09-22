@@ -8,6 +8,7 @@ use core::fmt::Write;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
+use embedded_graphics::text::renderer::TextRenderer;
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use heapless::String;
 
@@ -29,7 +30,7 @@ impl Screen for ReaderScreen {
         let frame = Frame::new(SCREEN)
             .with_status_bar(StatusBar::HEIGHT)
             .with_bottom_bar(Self::BOTTOM_BAR_HEIGHT)
-            .with_padding(Insets::new(8, 3, 8, 3));
+            .with_padding(Insets::new(7, 3, 7, 3));
 
         SCREEN
             .into_styled(PrimitiveStyle::with_fill(theme::BACKGROUND))
@@ -69,8 +70,8 @@ fn draw_reader_text<D>(display: &mut D, area: Rectangle, page: &Page<'_>) -> Res
 where
     D: DrawTarget<Color = Rgb565>,
 {
-    let style = theme::text(theme::FOREGROUND);
-    let line_height = style.font.character_size.height as i32 + 2;
+    let style = theme::monospace_text(theme::FOREGROUND);
+    let line_height = style.line_height() as i32;
     let text_style = TextStyleBuilder::new()
         .alignment(Alignment::Left)
         .baseline(Baseline::Top)
@@ -79,8 +80,8 @@ where
     for (index, line) in page.lines().enumerate() {
         Text::with_text_style(
             line,
-            area.top_left + Point::new(0, index as i32 * line_height),
-            style,
+            area.top_left + Point::new(0, 1 + index as i32 * line_height),
+            &style,
             text_style,
         )
         .draw(display)?;

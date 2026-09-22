@@ -5,7 +5,7 @@ use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{Point, Primitive, Size};
-use embedded_graphics::primitives::{PrimitiveStyle, Rectangle};
+use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 
 pub struct Menu {
@@ -111,7 +111,7 @@ pub struct MenuRow<'a> {
 }
 
 impl<'a> MenuRow<'a> {
-    pub const HEIGHT: u32 = 22;
+    pub const HEIGHT: u32 = 41;
 
     pub const fn new(area: Rectangle, text: &'a str, icon: Icon) -> Self {
         Self {
@@ -136,25 +136,20 @@ impl Drawable for MenuRow<'_> {
     where
         D: DrawTarget<Color = Rgb565>,
     {
-        let foreground = if self.selected {
-            theme::SELECTED_FOREGROUND
-        } else {
-            theme::FOREGROUND
-        };
+        RoundedRectangle::with_equal_corners(self.area, theme::CORNER_RADIUS)
+            .into_styled(theme::surface(self.selected))
+            .draw(display)?;
 
-        if self.selected {
-            self.area
-                .into_styled(PrimitiveStyle::with_fill(theme::SELECTED_BACKGROUND))
-                .draw(display)?;
-        }
-
-        let icon_area = Rectangle::new(self.area.top_left + Point::new(6, 5), Size::new(13, 12));
-        IconView::new(self.icon, icon_area, foreground).draw(display)?;
+        let icon_area = Rectangle::new(
+            self.area.top_left + Point::new(6, 0),
+            Size::new(13, self.area.size.height),
+        );
+        IconView::new(self.icon, icon_area, theme::FOREGROUND).draw(display)?;
 
         Text::with_text_style(
             self.text,
             Point::new(self.area.top_left.x + 28, self.area.center().y),
-            theme::text(foreground),
+            theme::text(theme::FOREGROUND),
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
                 .baseline(Baseline::Middle)
