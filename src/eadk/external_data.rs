@@ -11,5 +11,15 @@ pub fn get() -> &'static [u8] {
 
 #[cfg(not(target_os = "none"))]
 pub fn get() -> &'static [u8] {
-    include_bytes!("../../assets/library.nwlib")
+    use std::sync::OnceLock;
+
+    static LIBRARY: OnceLock<Vec<u8>> = OnceLock::new();
+
+    LIBRARY
+        .get_or_init(|| {
+            let path = std::env::var_os("NUMWORKS_EREADER_LIBRARY")
+                .expect("simulator library path is missing");
+            std::fs::read(path).expect("failed to read simulator library")
+        })
+        .as_slice()
 }
