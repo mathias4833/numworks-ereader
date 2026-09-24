@@ -82,20 +82,18 @@ impl Converter {
 
 fn convert_cover(image: image::DynamicImage) -> [u8; COVER_BYTE_LEN] {
     let image = image
-        .resize(
+        .resize_to_fill(
             COVER_WIDTH as u32,
             COVER_HEIGHT as u32,
             FilterType::Lanczos3,
         )
         .to_rgb8();
     let mut cover = [0; COVER_BYTE_LEN];
-    let left = (COVER_WIDTH as u32 - image.width()) / 2;
-    let top = (COVER_HEIGHT as u32 - image.height()) / 2;
 
     for (x, y, pixel) in image.enumerate_pixels() {
         let [red, green, blue] = pixel.0;
         let rgb565 = ((red as u16 >> 3) << 11) | ((green as u16 >> 2) << 5) | (blue as u16 >> 3);
-        let offset = (((y + top) as usize * COVER_WIDTH) + (x + left) as usize) * 2;
+        let offset = ((y as usize * COVER_WIDTH) + x as usize) * 2;
         cover[offset..offset + 2].copy_from_slice(&rgb565.to_le_bytes());
     }
 
