@@ -1,4 +1,4 @@
-use crate::ui::layout::Stack;
+use crate::ui::layout::{Stack, centered_line_y};
 use crate::ui::theme;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
@@ -6,6 +6,7 @@ use embedded_graphics::image::Image;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{Point, Primitive};
 use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
+use embedded_graphics::text::renderer::TextRenderer;
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use embedded_iconoir::prelude::{IconoirNewIcon, icons};
 
@@ -172,13 +173,15 @@ impl Drawable for MenuRow<'_> {
         )
         .draw(display)?;
 
+        let style = theme::text(theme::FOREGROUND);
+        let text_y = centered_line_y(self.area, style.line_height());
         Text::with_text_style(
             self.text,
-            Point::new(self.area.top_left.x + 42, self.area.center().y),
-            theme::text(theme::FOREGROUND),
+            Point::new(self.area.top_left.x + 42, text_y),
+            &style,
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
-                .baseline(Baseline::Middle)
+                .baseline(Baseline::Top)
                 .build(),
         )
         .draw(display)?;

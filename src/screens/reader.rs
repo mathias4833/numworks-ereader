@@ -1,10 +1,11 @@
 use crate::app::AppAction;
 use crate::screens::{Event, Screen, ScreenContext};
 use crate::ui::components::status_bar::StatusBar;
-use crate::ui::layout::{Frame, Insets, SCREEN};
+use crate::ui::layout::{Frame, Insets, SCREEN, centered_line_y};
 use crate::ui::theme;
 use book_format::Page;
 use core::fmt::Write;
+use embedded_graphics::geometry::AnchorY;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
@@ -119,27 +120,28 @@ where
     .into_styled(PrimitiveStyle::with_stroke(theme::FOREGROUND, 1))
     .draw(display)?;
 
+    let style = theme::text(theme::FOREGROUND);
+    let content = area.resized_height(area.size.height - 1, AnchorY::Bottom);
+    let text_y = centered_line_y(content, style.line_height());
+
     Text::with_text_style(
         page_label.as_str(),
-        Point::new(area.top_left.x + 8, area.center().y),
-        theme::text(theme::FOREGROUND),
+        Point::new(area.top_left.x + 8, text_y),
+        &style,
         TextStyleBuilder::new()
             .alignment(Alignment::Left)
-            .baseline(Baseline::Middle)
+            .baseline(Baseline::Top)
             .build(),
     )
     .draw(display)?;
 
     Text::with_text_style(
         progress_label.as_str(),
-        Point::new(
-            area.top_left.x + area.size.width as i32 - 8,
-            area.center().y,
-        ),
-        theme::text(theme::FOREGROUND),
+        Point::new(area.top_left.x + area.size.width as i32 - 8, text_y),
+        &style,
         TextStyleBuilder::new()
             .alignment(Alignment::Right)
-            .baseline(Baseline::Middle)
+            .baseline(Baseline::Top)
             .build(),
     )
     .draw(display)?;

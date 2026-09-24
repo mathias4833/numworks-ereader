@@ -1,8 +1,11 @@
 use crate::ui::components::battery::BatteryState;
+use crate::ui::layout::centered_line_y;
 use crate::ui::theme;
+use embedded_graphics::geometry::AnchorY;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{Line, PrimitiveStyle, Rectangle};
+use embedded_graphics::text::renderer::TextRenderer;
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 
 pub struct StatusBar<'a> {
@@ -50,14 +53,18 @@ impl<'a> Drawable for StatusBar<'a> {
         .draw(display)?;
 
         let style = theme::text(theme::FOREGROUND);
+        let content = self
+            .area
+            .resized_height(self.area.size.height - 1, AnchorY::Top);
+        let text_y = centered_line_y(content, style.line_height());
 
         Text::with_text_style(
             self.title,
-            self.area.center(),
-            style,
+            Point::new(self.area.center().x, text_y),
+            &style,
             TextStyleBuilder::new()
                 .alignment(Alignment::Center)
-                .baseline(Baseline::Middle)
+                .baseline(Baseline::Top)
                 .build(),
         )
         .draw(display)?;
