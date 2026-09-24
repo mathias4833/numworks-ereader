@@ -29,10 +29,6 @@ pub fn surface(selected: bool) -> PrimitiveStyle<Rgb565> {
         .build()
 }
 
-pub const DANGER: Rgb565 = Rgb565::RED;
-pub const WARNING: Rgb565 = Rgb565::YELLOW;
-pub const SUCCESS: Rgb565 = Rgb565::GREEN;
-
 pub fn text(color: Rgb565) -> U8g2TextStyle<Rgb565> {
     U8g2TextStyle::new(fonts::u8g2_font_helvR10_tr, color)
 }

@@ -2,16 +2,18 @@ use crate::app::AppAction;
 use crate::eadk::event::Event;
 use crate::screens::{Screen, ScreenContext};
 use crate::ui::components::book_card::BookCard;
-use crate::ui::components::menu::{Menu, MenuRow};
+use crate::ui::components::menu::{Menu, MenuIcon, MenuRow};
 use crate::ui::components::status_bar::StatusBar;
-use crate::ui::icons::Icon;
 use crate::ui::layout::{Frame, Insets, SCREEN, Stack};
 use crate::ui::theme;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::PrimitiveStyle;
 
-static HOME_ITEMS: [(&str, Icon); 2] = [("Library", Icon::Folder), ("Settings", Icon::Settings)];
+static HOME_ITEMS: [(&str, MenuIcon); 2] = [
+    ("Library", MenuIcon::Folder),
+    ("Settings", MenuIcon::Settings),
+];
 
 pub struct HomeScreen {
     menu: Menu,

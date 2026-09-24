@@ -3,11 +3,13 @@ use book_format::{Book, COVER_HEIGHT, COVER_WIDTH};
 use core::fmt::Write;
 use embedded_graphics::Drawable;
 use embedded_graphics::geometry::{Point, Size};
+use embedded_graphics::image::Image;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::pixelcolor::raw::RawU16;
-use embedded_graphics::prelude::{DrawTarget, Primitive};
+use embedded_graphics::prelude::{DrawTarget, DrawTargetExt, Primitive};
 use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
+use embedded_iconoir::prelude::{IconoirNewIcon, icons};
 use heapless::String;
 
 pub struct BookCard<'a> {
@@ -80,6 +82,10 @@ impl<'a> Drawable for BookCard<'a> {
         }
 
         let title_y = if self.label.is_some() { 58 } else { 44 };
+        let title_area = Rectangle::new(
+            self.area.top_left + Point::new(80, title_y - 10),
+            Size::new(self.area.size.width.saturating_sub(114), 20),
+        );
         Text::with_text_style(
             self.book.title(),
             self.area.top_left + Point::new(80, title_y),
@@ -89,7 +95,7 @@ impl<'a> Drawable for BookCard<'a> {
                 .baseline(Baseline::Middle)
                 .build(),
         )
-        .draw(display)?;
+        .draw(&mut display.clipped(&title_area))?;
 
         let mut progress = String::<5>::new();
         let _ = write!(progress, "{}%", self.progress);
@@ -102,6 +108,16 @@ impl<'a> Drawable for BookCard<'a> {
                 .alignment(Alignment::Right)
                 .baseline(Baseline::Middle)
                 .build(),
+        )
+        .draw(display)?;
+
+        let chevron_position = Point::new(
+            self.area.top_left.x + self.area.size.width as i32 - 29,
+            self.area.top_left.y + (self.area.size.height as i32 - 18) / 2,
+        );
+        Image::new(
+            &icons::size18px::navigation::NavArrowRight::new(theme::FOREGROUND),
+            chevron_position,
         )
         .draw(display)?;
 

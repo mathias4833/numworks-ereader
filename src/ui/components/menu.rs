@@ -1,12 +1,13 @@
-use crate::ui::icons::{Icon, IconView};
 use crate::ui::layout::Stack;
 use crate::ui::theme;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
+use embedded_graphics::image::Image;
 use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::{Point, Primitive, Size};
+use embedded_graphics::prelude::{Point, Primitive};
 use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
+use embedded_iconoir::prelude::{IconoirNewIcon, icons};
 
 pub struct Menu {
     item_count: usize,
@@ -103,17 +104,23 @@ impl MenuView<'_> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum MenuIcon {
+    Folder,
+    Settings,
+}
+
 pub struct MenuRow<'a> {
     area: Rectangle,
     text: &'a str,
-    icon: Icon,
+    icon: MenuIcon,
     selected: bool,
 }
 
 impl<'a> MenuRow<'a> {
     pub const HEIGHT: u32 = 41;
 
-    pub const fn new(area: Rectangle, text: &'a str, icon: Icon) -> Self {
+    pub const fn new(area: Rectangle, text: &'a str, icon: MenuIcon) -> Self {
         Self {
             area,
             text,
@@ -140,15 +147,34 @@ impl Drawable for MenuRow<'_> {
             .into_styled(theme::surface(self.selected))
             .draw(display)?;
 
-        let icon_area = Rectangle::new(
-            self.area.top_left + Point::new(6, 0),
-            Size::new(13, self.area.size.height),
+        let icon_y = self.area.top_left.y + (self.area.size.height as i32 - 18) / 2;
+        let icon_position = Point::new(self.area.top_left.x + 11, icon_y);
+        match self.icon {
+            MenuIcon::Folder => Image::new(
+                &icons::size18px::docs::Folder::new(theme::FOREGROUND),
+                icon_position,
+            )
+            .draw(display)?,
+            MenuIcon::Settings => Image::new(
+                &icons::size18px::system::Settings::new(theme::FOREGROUND),
+                icon_position,
+            )
+            .draw(display)?,
+        }
+
+        let chevron_position = Point::new(
+            self.area.top_left.x + self.area.size.width as i32 - 29,
+            icon_y,
         );
-        IconView::new(self.icon, icon_area, theme::FOREGROUND).draw(display)?;
+        Image::new(
+            &icons::size18px::navigation::NavArrowRight::new(theme::FOREGROUND),
+            chevron_position,
+        )
+        .draw(display)?;
 
         Text::with_text_style(
             self.text,
-            Point::new(self.area.top_left.x + 28, self.area.center().y),
+            Point::new(self.area.top_left.x + 42, self.area.center().y),
             theme::text(theme::FOREGROUND),
             TextStyleBuilder::new()
                 .alignment(Alignment::Left)
