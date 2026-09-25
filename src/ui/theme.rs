@@ -6,6 +6,7 @@ use u8g2_fonts::{U8g2TextStyle, fonts};
 
 pub const BACKGROUND: Rgb565 = Rgb565::WHITE;
 pub const FOREGROUND: Rgb565 = Rgb565::BLACK;
+pub const SECONDARY_FOREGROUND: Rgb565 = Rgb565::new(16, 32, 16);
 
 pub const SURFACE: Rgb565 = Rgb565::new(30, 60, 30);
 pub const SURFACE_SELECTED: Rgb565 = Rgb565::new(26, 53, 26);
@@ -31,6 +32,10 @@ pub fn surface(selected: bool) -> PrimitiveStyle<Rgb565> {
 
 pub fn text(color: Rgb565) -> U8g2TextStyle<Rgb565> {
     U8g2TextStyle::new(fonts::u8g2_font_helvR10_tr, color)
+}
+
+pub fn large_text(color: Rgb565) -> U8g2TextStyle<Rgb565> {
+    U8g2TextStyle::new(fonts::u8g2_font_helvR12_tr, color)
 }
 
 pub fn monospace_text(color: Rgb565) -> U8g2TextStyle<Rgb565> {

@@ -1,3 +1,5 @@
+use crate::ui::components::text_block::TextBlock;
+use crate::ui::layout::Stack;
 use crate::ui::theme;
 use book_format::{Book, COVER_HEIGHT, COVER_WIDTH};
 use core::fmt::Write;
@@ -8,9 +10,14 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::pixelcolor::raw::RawU16;
 use embedded_graphics::prelude::{DrawTarget, DrawTargetExt, Primitive};
 use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
+use embedded_graphics::text::renderer::TextRenderer;
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use embedded_iconoir::prelude::{IconoirNewIcon, icons};
 use heapless::String;
+
+const COVER_TO_TEXT: i32 = 10;
+const TEXT_TO_CHEVRON: i32 = 5;
+const TEXT_GAP: u32 = 4;
 
 pub struct BookCard<'a> {
     area: Rectangle,
@@ -68,50 +75,58 @@ impl<'a> Drawable for BookCard<'a> {
 
         display.fill_contiguous(&cover, pixels)?;
 
+        let chevron_position = Point::new(
+            self.area.top_left.x + self.area.size.width as i32 - 29,
+            self.area.top_left.y + (self.area.size.height as i32 - 18) / 2,
+        );
+        let text_origin = Point::new(
+            cover.top_left.x + cover.size.width as i32 + COVER_TO_TEXT,
+            self.area.top_left.y,
+        );
+        let text_width = (chevron_position.x - TEXT_TO_CHEVRON - text_origin.x) as u32;
+        let text_area = Rectangle::new(text_origin, Size::new(text_width, self.area.size.height));
+        let title = TextBlock::new(
+            self.book.title(),
+            text_width,
+            theme::large_text(theme::FOREGROUND),
+        );
+
+        let secondary_style = theme::text(theme::SECONDARY_FOREGROUND);
+        let line_height = secondary_style.line_height();
+        let author = self.book.author();
+        let secondary_lines = u32::from(self.label.is_some()) + u32::from(!author.is_empty());
+        let block_height = title.height() + secondary_lines * (line_height + TEXT_GAP);
+
+        let block = Rectangle::new(
+            text_area.top_left
+                + Point::new(0, (text_area.size.height as i32 - block_height as i32) / 2),
+            Size::new(text_area.size.width, block_height),
+        );
+        let mut layout = Stack::vertical(block, TEXT_GAP);
+        let mut clipped = display.clipped(&text_area);
+
         if let Some(label) = self.label {
-            Text::with_text_style(
+            Text::with_baseline(
                 label,
-                self.area.top_left + Point::new(80, 32),
-                theme::text(theme::FOREGROUND),
-                TextStyleBuilder::new()
-                    .alignment(Alignment::Left)
-                    .baseline(Baseline::Middle)
-                    .build(),
+                layout.next(line_height).top_left,
+                &secondary_style,
+                Baseline::Top,
             )
-            .draw(display)?;
+            .draw(&mut clipped)?;
         }
 
-        let title_y = if self.label.is_some() { 58 } else { 44 };
-        let title_area = Rectangle::new(
-            self.area.top_left + Point::new(80, title_y - 10),
-            Size::new(self.area.size.width.saturating_sub(114), 20),
-        );
-        Text::with_text_style(
-            self.book.title(),
-            self.area.top_left + Point::new(80, title_y),
-            theme::text(theme::FOREGROUND),
-            TextStyleBuilder::new()
-                .alignment(Alignment::Left)
-                .baseline(Baseline::Middle)
-                .build(),
-        )
-        .draw(&mut display.clipped(&title_area))?;
+        let title_area = layout.next(title.height());
+        title.at(title_area.top_left).draw(&mut clipped)?;
 
-        let author_y = if self.label.is_some() { 80 } else { 68 };
-        let author_area = Rectangle::new(
-            self.area.top_left + Point::new(80, author_y - 10),
-            Size::new(self.area.size.width.saturating_sub(114), 20),
-        );
-        Text::with_text_style(
-            self.book.author(),
-            self.area.top_left + Point::new(80, author_y),
-            theme::text(theme::FOREGROUND),
-            TextStyleBuilder::new()
-                .alignment(Alignment::Left)
-                .baseline(Baseline::Middle)
-                .build(),
-        )
-        .draw(&mut display.clipped(&author_area))?;
+        if !author.is_empty() {
+            Text::with_baseline(
+                author,
+                layout.next(line_height).top_left,
+                &secondary_style,
+                Baseline::Top,
+            )
+            .draw(&mut clipped)?;
+        }
 
         let mut progress = String::<5>::new();
         let _ = write!(progress, "{}%", self.progress);
@@ -127,10 +142,6 @@ impl<'a> Drawable for BookCard<'a> {
         )
         .draw(display)?;
 
-        let chevron_position = Point::new(
-            self.area.top_left.x + self.area.size.width as i32 - 29,
-            self.area.top_left.y + (self.area.size.height as i32 - 18) / 2,
-        );
         Image::new(
             &icons::size18px::navigation::NavArrowRight::new(theme::FOREGROUND),
             chevron_position,
