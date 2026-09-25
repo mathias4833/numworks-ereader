@@ -23,7 +23,7 @@ impl Converter {
             .iter()
             .flat_map(|chapter| self.paginate(chapter))
             .collect();
-        let builder = BookBuilder::new(deunicode(&book.title), pages);
+        let builder = BookBuilder::new(deunicode(&book.title), deunicode(&book.author), pages);
         match book
             .cover
             .as_deref()

@@ -3,6 +3,7 @@ use std::path::Path;
 
 pub struct EpubBook {
     pub title: String,
+    pub author: String,
     pub chapters: Vec<String>,
     pub cover: Option<Vec<u8>>,
 }
@@ -11,6 +12,10 @@ impl EpubBook {
     pub fn open(path: &Path) -> Self {
         let mut epub = EpubDoc::new(path).expect("failed to open EPUB");
         let title = epub.get_title().expect("EPUB has no title");
+        let author = epub
+            .mdata("creator")
+            .map(|item| item.value.clone())
+            .unwrap_or_default();
         let cover = epub.get_cover().map(|(bytes, _)| bytes);
         let nav_id = epub.get_nav_id();
 
@@ -35,6 +40,7 @@ impl EpubBook {
 
         Self {
             title,
+            author,
             chapters,
             cover,
         }

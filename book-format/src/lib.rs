@@ -21,6 +21,7 @@ pub enum ParseError {
     InvalidMagic,
     UnsupportedVersion,
     InvalidTitle,
+    InvalidAuthor,
     InvalidPageOffsets,
     InvalidPageData,
     InvalidBookOffsets,

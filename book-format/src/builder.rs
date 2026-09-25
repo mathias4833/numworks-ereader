@@ -7,14 +7,16 @@ const DEFAULT_COVER: &[u8; COVER_BYTE_LEN] = include_bytes!("../../assets/defaul
 
 pub struct BookBuilder {
     title: String,
+    author: String,
     pages: Vec<String>,
     cover: Option<[u8; COVER_BYTE_LEN]>,
 }
 
 impl BookBuilder {
-    pub fn new(title: String, pages: Vec<String>) -> Self {
+    pub fn new(title: String, author: String, pages: Vec<String>) -> Self {
         Self {
             title,
+            author,
             pages,
             cover: None,
         }
@@ -36,8 +38,10 @@ impl BookBuilder {
         writer.u16(VERSION);
         writer.u32(self.pages.len())?;
         writer.u32(self.title.len())?;
+        writer.u32(self.author.len())?;
 
         writer.bytes(self.title.as_bytes());
+        writer.bytes(self.author.as_bytes());
         writer.bytes(self.cover.as_ref().unwrap_or(DEFAULT_COVER));
 
         writer.indexed(&self.pages, |writer, page| {

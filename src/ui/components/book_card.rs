@@ -97,6 +97,22 @@ impl<'a> Drawable for BookCard<'a> {
         )
         .draw(&mut display.clipped(&title_area))?;
 
+        let author_y = if self.label.is_some() { 80 } else { 68 };
+        let author_area = Rectangle::new(
+            self.area.top_left + Point::new(80, author_y - 10),
+            Size::new(self.area.size.width.saturating_sub(114), 20),
+        );
+        Text::with_text_style(
+            self.book.author(),
+            self.area.top_left + Point::new(80, author_y),
+            theme::text(theme::FOREGROUND),
+            TextStyleBuilder::new()
+                .alignment(Alignment::Left)
+                .baseline(Baseline::Middle)
+                .build(),
+        )
+        .draw(&mut display.clipped(&author_area))?;
+
         let mut progress = String::<5>::new();
         let _ = write!(progress, "{}%", self.progress);
 

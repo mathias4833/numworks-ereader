@@ -3,6 +3,7 @@ use crate::{BOOK_MAGIC, COVER_BYTE_LEN, ParseError, VERSION};
 
 pub struct Book<'a> {
     title: &'a str,
+    author: &'a str,
     cover: &'a [u8],
     page_offsets: OffsetTable<'a>,
     pages: &'a [u8],
@@ -24,9 +25,12 @@ impl<'a> Book<'a> {
 
         let page_count = reader.u32().ok_or(ParseError::TooShort)? as usize;
         let title_len = reader.u32().ok_or(ParseError::TooShort)? as usize;
+        let author_len = reader.u32().ok_or(ParseError::TooShort)? as usize;
 
         let title = str::from_utf8(reader.take(title_len).ok_or(ParseError::InvalidTitle)?)
             .map_err(|_| ParseError::InvalidTitle)?;
+        let author = str::from_utf8(reader.take(author_len).ok_or(ParseError::InvalidAuthor)?)
+            .map_err(|_| ParseError::InvalidAuthor)?;
 
         let cover = reader.take(COVER_BYTE_LEN).ok_or(ParseError::TooShort)?;
 
@@ -35,6 +39,7 @@ impl<'a> Book<'a> {
 
         Ok(Self {
             title,
+            author,
             cover,
             page_offsets,
             pages: reader.remaining(),
@@ -43,6 +48,10 @@ impl<'a> Book<'a> {
 
     pub const fn title(&self) -> &'a str {
         self.title
+    }
+
+    pub const fn author(&self) -> &'a str {
+        self.author
     }
 
     pub const fn cover(&self) -> &'a [u8] {
