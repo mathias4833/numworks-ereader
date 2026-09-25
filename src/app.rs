@@ -4,39 +4,16 @@ use crate::reading::ReadingState;
 use crate::screens::home::HomeScreen;
 use crate::screens::library::LibraryScreen;
 use crate::screens::reader::ReaderScreen;
-use crate::screens::{Screen, ScreenContext};
+use crate::screens::{ActiveScreen, Route, Screen, ScreenContext, ScreenResult, UpdateContext};
 use crate::ui::components::battery::BatteryState;
 use crate::ui::display::EadkDisplay;
 use book_format::Library;
 
 const EVENT_TIMEOUT_MS: i32 = 1000;
 
-pub enum AppScreen {
-    Home(HomeScreen),
-    Reader(ReaderScreen),
-    Library(LibraryScreen),
-}
-
-pub enum AppAction {
-    None,
-    Redraw,
-    OpenReader,
-    OpenLibrary,
-    OpenBook(usize),
-    GoHome,
-    PreviousPage,
-    NextPage,
-}
-
-impl AppAction {
-    pub const fn redraw_if(cond: bool) -> Self {
-        if cond { Self::Redraw } else { Self::None }
-    }
-}
-
 pub struct App {
     display: EadkDisplay,
-    screen: AppScreen,
+    screen: ActiveScreen,
     library: Library<'static>,
     battery: BatteryState,
     reading: ReadingState,
@@ -56,7 +33,7 @@ impl App {
 
         Self {
             display: EadkDisplay::new(),
-            screen: AppScreen::Home(HomeScreen::new()),
+            screen: ActiveScreen::Home(HomeScreen::new()),
             library,
             battery: BatteryState::new(),
             reading,
@@ -73,72 +50,44 @@ impl App {
             let now = eadk::timing::millis();
 
             let battery_changed = self.battery.update_if_needed(now, event);
+            let system_redraw = matches!(event, Event::BatteryCharging | Event::USBPlug);
 
-            let action = match event {
-                Event::None | Event::Idle => AppAction::None,
-                Event::BatteryCharging | Event::USBPlug => AppAction::Redraw,
-                _ => self.current_screen_handle_event(event),
+            let result = match event {
+                Event::None | Event::Idle | Event::BatteryCharging | Event::USBPlug => {
+                    ScreenResult::None
+                }
+                _ => {
+                    let mut ctx = UpdateContext {
+                        library: &self.library,
+                        reading: &mut self.reading,
+                    };
+                    self.screen.on_event(event, &mut ctx)
+                }
             };
-            let needs_redraw = self.handle_action(action);
+            let needs_redraw = match result {
+                ScreenResult::None => false,
+                ScreenResult::Redraw => true,
+                ScreenResult::Navigate(route) => {
+                    self.navigate(route);
+                    true
+                }
+            };
 
-            if battery_changed || needs_redraw {
+            if system_redraw || battery_changed || needs_redraw {
                 self.draw();
             }
         }
     }
 
-    fn current_screen_handle_event(&mut self, event: Event) -> AppAction {
-        match &mut self.screen {
-            AppScreen::Home(screen) => screen.handle_event(event),
-            AppScreen::Library(screen) => screen.handle_event(event),
-            AppScreen::Reader(screen) => screen.handle_event(event),
-        }
-    }
-
-    /// Returns `true` if the screen needs to be redrawn.
-    fn handle_action(&mut self, action: AppAction) -> bool {
-        match action {
-            AppAction::None => false,
-
-            AppAction::Redraw => true,
-
-            AppAction::OpenReader => {
-                self.screen = AppScreen::Reader(ReaderScreen::new());
-                true
-            }
-
-            AppAction::OpenLibrary => {
-                self.screen = AppScreen::Library(LibraryScreen::new(
-                    &self.library,
-                    self.reading.current_book(),
-                ));
-                true
-            }
-
-            AppAction::OpenBook(index) => {
-                if !self.reading.select_book(index) {
-                    return false;
-                }
-
-                self.screen = AppScreen::Reader(ReaderScreen::new());
-                true
-            }
-
-            AppAction::GoHome => {
-                self.screen = AppScreen::Home(HomeScreen::new());
-                true
-            }
-
-            AppAction::PreviousPage => self.reading.previous_page(),
-
-            AppAction::NextPage => {
-                let Ok(Some(book)) = self.library.book(self.reading.current_book()) else {
-                    return false;
-                };
-
-                self.reading.next_page(book.page_count())
-            }
-        }
+    fn navigate(&mut self, route: Route) {
+        self.screen = match route {
+            Route::Reader => ActiveScreen::Reader(ReaderScreen::new()),
+            Route::Library => ActiveScreen::Library(LibraryScreen::new(
+                &self.library,
+                self.reading.current_book(),
+            )),
+            Route::Home => ActiveScreen::Home(HomeScreen::new()),
+        };
     }
 
     fn draw(&mut self) {
@@ -153,10 +102,6 @@ impl App {
             library: &self.library,
         };
 
-        let _ = match &self.screen {
-            AppScreen::Home(screen) => screen.draw(&mut self.display, ctx),
-            AppScreen::Library(screen) => screen.draw(&mut self.display, ctx),
-            AppScreen::Reader(screen) => screen.draw(&mut self.display, ctx),
-        };
+        let _ = self.screen.draw(&mut self.display, ctx);
     }
 }

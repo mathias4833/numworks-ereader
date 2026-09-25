@@ -1,6 +1,5 @@
-use crate::app::AppAction;
 use crate::eadk::event::Event;
-use crate::screens::{Screen, ScreenContext};
+use crate::screens::{Route, Screen, ScreenContext, ScreenResult, UpdateContext};
 use crate::ui::components::book_card::BookCard;
 use crate::ui::components::menu::Menu;
 use crate::ui::components::status_bar::StatusBar;
@@ -62,17 +61,23 @@ impl Screen for LibraryScreen {
         Ok(())
     }
 
-    fn handle_event(&mut self, event: Event) -> AppAction {
+    fn on_event(&mut self, event: Event, ctx: &mut UpdateContext<'_>) -> ScreenResult {
         match event {
-            Event::Up => AppAction::redraw_if(self.menu.move_up()),
+            Event::Up => ScreenResult::redraw_if(self.menu.move_up()),
 
-            Event::Down => AppAction::redraw_if(self.menu.move_down()),
+            Event::Down => ScreenResult::redraw_if(self.menu.move_down()),
 
-            Event::Ok => AppAction::OpenBook(self.menu.selected()),
+            Event::Ok => {
+                if ctx.reading.select_book(self.menu.selected()) {
+                    ScreenResult::Navigate(Route::Reader)
+                } else {
+                    ScreenResult::None
+                }
+            }
 
-            Event::Back => AppAction::GoHome,
+            Event::Back => ScreenResult::Navigate(Route::Home),
 
-            _ => AppAction::None,
+            _ => ScreenResult::None,
         }
     }
 }

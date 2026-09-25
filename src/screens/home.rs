@@ -1,6 +1,5 @@
-use crate::app::AppAction;
 use crate::eadk::event::Event;
-use crate::screens::{Screen, ScreenContext};
+use crate::screens::{Route, Screen, ScreenContext, ScreenResult, UpdateContext};
 use crate::ui::components::book_card::BookCard;
 use crate::ui::components::menu::{Menu, MenuIcon, MenuRow};
 use crate::ui::components::status_bar::StatusBar;
@@ -67,20 +66,20 @@ impl Screen for HomeScreen {
         Ok(())
     }
 
-    fn handle_event(&mut self, event: Event) -> AppAction {
+    fn on_event(&mut self, event: Event, _ctx: &mut UpdateContext<'_>) -> ScreenResult {
         match event {
-            Event::Up => AppAction::redraw_if(self.menu.move_up()),
+            Event::Up => ScreenResult::redraw_if(self.menu.move_up()),
 
-            Event::Down => AppAction::redraw_if(self.menu.move_down()),
+            Event::Down => ScreenResult::redraw_if(self.menu.move_down()),
 
             Event::Ok => match self.menu.selected() {
-                0 => AppAction::OpenReader,
-                1 => AppAction::OpenLibrary,
-                2 => AppAction::None, // TODO: Settings
-                _ => AppAction::None,
+                0 => ScreenResult::Navigate(Route::Reader),
+                1 => ScreenResult::Navigate(Route::Library),
+                2 => ScreenResult::None, // TODO: Settings
+                _ => ScreenResult::None,
             },
 
-            _ => AppAction::None,
+            _ => ScreenResult::None,
         }
     }
 }
