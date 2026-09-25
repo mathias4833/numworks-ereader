@@ -58,7 +58,7 @@ impl Xtask {
 
         let data = LibraryConverter::new()
             .convert(books)
-            .map_err(|_| anyhow::anyhow!("failed to build library"))?;
+            .context("failed to build library")?;
 
         fs::write(&self.library, data)?;
 

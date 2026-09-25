@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use epub::doc::EpubDoc;
 use std::path::Path;
 
@@ -9,9 +10,9 @@ pub struct EpubBook {
 }
 
 impl EpubBook {
-    pub fn open(path: &Path) -> Self {
-        let mut epub = EpubDoc::new(path).expect("failed to open EPUB");
-        let title = epub.get_title().expect("EPUB has no title");
+    pub fn open(path: &Path) -> Result<Self> {
+        let mut epub = EpubDoc::new(path).context("failed to open EPUB")?;
+        let title = epub.get_title().context("EPUB has no title")?;
         let author = epub
             .mdata("creator")
             .map(|item| item.value.clone())
@@ -25,24 +26,28 @@ impl EpubBook {
             if !item.linear || nav_id.as_deref() == Some(item.idref.as_str()) {
                 continue;
             }
+
             epub.set_current_chapter(index);
+
             if epub.get_current_mime().as_deref() != Some("application/xhtml+xml") {
                 continue;
             }
 
-            let (html, _) = epub.get_current_str().expect("failed to read EPUB chapter");
-            let text =
-                html2text::from_read(html.as_bytes(), 10_000).expect("failed to extract EPUB text");
+            let (html, _) = epub
+                .get_current_str()
+                .context("failed to read EPUB chapter")?;
+            let text = html2text::from_read(html.as_bytes(), 10_000)
+                .context("failed to extract EPUB text")?;
             if !text.trim().is_empty() {
                 chapters.push(text);
             }
         }
 
-        Self {
+        Ok(Self {
             title,
             author,
             chapters,
             cover,
-        }
+        })
     }
 }

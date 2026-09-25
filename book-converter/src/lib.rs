@@ -1,7 +1,8 @@
 mod converter;
 mod epub;
 
-use book_format::{EncodeError, LibraryBuilder};
+use anyhow::{Context, Result, anyhow};
+use book_format::LibraryBuilder;
 use converter::Converter;
 use epub::EpubBook;
 use std::path::PathBuf;
@@ -26,15 +27,19 @@ impl LibraryConverter {
         }
     }
 
-    pub fn convert(&self, inputs: &[PathBuf]) -> Result<Vec<u8>, EncodeError> {
+    pub fn convert(&self, inputs: &[PathBuf]) -> Result<Vec<u8>> {
         let books = inputs
             .iter()
             .map(|path| {
-                let epub = EpubBook::open(path);
-                self.converter.convert(&epub)
-            })
-            .collect();
+                let epub = EpubBook::open(path)
+                    .with_context(|| format!("failed to import {}", path.display()))?;
 
-        LibraryBuilder::new(books).encode()
+                Ok(self.converter.convert(&epub))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        LibraryBuilder::new(books)
+            .encode()
+            .map_err(|_| anyhow!("library is too large"))
     }
 }
