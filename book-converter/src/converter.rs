@@ -1,6 +1,9 @@
 use crate::epub::EpubBook;
 use book_format::BookBuilder;
-use book_format::{COVER_BYTE_LEN, COVER_HEIGHT, COVER_WIDTH};
+use book_format::{
+    COMPACT_COVER_BYTE_LEN, COMPACT_COVER_HEIGHT, COMPACT_COVER_WIDTH, COVER_BYTE_LEN,
+    COVER_HEIGHT, COVER_WIDTH,
+};
 use deunicode::deunicode;
 use image::imageops::FilterType;
 
@@ -29,7 +32,14 @@ impl Converter {
             .as_deref()
             .and_then(|bytes| image::load_from_memory(bytes).ok())
         {
-            Some(image) => builder.with_cover(convert_cover(image)),
+            Some(image) => builder.with_covers(
+                convert_cover::<COVER_BYTE_LEN>(&image, COVER_WIDTH, COVER_HEIGHT),
+                convert_cover::<COMPACT_COVER_BYTE_LEN>(
+                    &image,
+                    COMPACT_COVER_WIDTH,
+                    COMPACT_COVER_HEIGHT,
+                ),
+            ),
             None => builder,
         }
     }
@@ -80,20 +90,20 @@ impl Converter {
     }
 }
 
-fn convert_cover(image: image::DynamicImage) -> [u8; COVER_BYTE_LEN] {
+fn convert_cover<const N: usize>(
+    image: &image::DynamicImage,
+    width: usize,
+    height: usize,
+) -> [u8; N] {
     let image = image
-        .resize_to_fill(
-            COVER_WIDTH as u32,
-            COVER_HEIGHT as u32,
-            FilterType::Lanczos3,
-        )
+        .resize_to_fill(width as u32, height as u32, FilterType::Lanczos3)
         .to_rgb8();
-    let mut cover = [0; COVER_BYTE_LEN];
+    let mut cover = [0; N];
 
     for (x, y, pixel) in image.enumerate_pixels() {
         let [red, green, blue] = pixel.0;
         let rgb565 = ((red as u16 >> 3) << 11) | ((green as u16 >> 2) << 5) | (blue as u16 >> 3);
-        let offset = ((y as usize * COVER_WIDTH) + x as usize) * 2;
+        let offset = ((y as usize * width) + x as usize) * 2;
         cover[offset..offset + 2].copy_from_slice(&rgb565.to_le_bytes());
     }
 

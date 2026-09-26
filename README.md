@@ -87,8 +87,8 @@ The app waits for vertical blanking before drawing a screen to reduce visible te
 
 ### Book conversion
 
-EPUB processing happens on the host. `book-converter` extracts the title, author, cover and chapter contents, converts
-the cover to RGB565 and paginates the text.
+EPUB processing happens on the host. `book-converter` extracts the title, author, cover and chapter contents, generates
+60 x 90 and 40 x 60 RGB565 covers, and paginates the text.
 
 Pagination is done before the book reaches the calculator. The reader doesn't parse XHTML or reflow text while a book is
 open; it only looks up and draws the pages produced during conversion.

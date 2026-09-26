@@ -43,7 +43,7 @@ impl Screen for LibraryScreen {
 
         let layout = Stack::vertical(frame.content(), 4);
         self.menu
-            .view(layout, BookCard::HEIGHT)
+            .view(layout, BookCard::COMPACT_HEIGHT)
             .draw_with(display, |display, slot| {
                 let Ok(Some(book)) = ctx.library.book(slot.index) else {
                     return Ok(());
@@ -53,7 +53,7 @@ impl Screen for LibraryScreen {
                     .reading
                     .progress_percent_for(slot.index, book.page_count());
 
-                BookCard::new(slot.area, &book, progress)
+                BookCard::compact(slot.area, &book, progress)
                     .selected(slot.selected)
                     .draw(display)
             })?;

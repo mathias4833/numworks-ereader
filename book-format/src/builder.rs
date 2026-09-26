@@ -1,15 +1,20 @@
 use crate::utils::Writer;
-use crate::{BOOK_MAGIC, COVER_BYTE_LEN, EncodeError, LIBRARY_MAGIC, VERSION};
+use crate::{
+    BOOK_MAGIC, COMPACT_COVER_BYTE_LEN, COVER_BYTE_LEN, EncodeError, LIBRARY_MAGIC, VERSION,
+};
 use std::string::String;
 use std::vec::Vec;
 
 const DEFAULT_COVER: &[u8; COVER_BYTE_LEN] = include_bytes!("../../assets/default-cover.rgb565");
+const DEFAULT_COMPACT_COVER: &[u8; COMPACT_COVER_BYTE_LEN] =
+    include_bytes!("../../assets/default-cover-compact.rgb565");
 
 pub struct BookBuilder {
     title: String,
     author: String,
     pages: Vec<String>,
     cover: Option<[u8; COVER_BYTE_LEN]>,
+    compact_cover: Option<[u8; COMPACT_COVER_BYTE_LEN]>,
 }
 
 impl BookBuilder {
@@ -19,11 +24,17 @@ impl BookBuilder {
             author,
             pages,
             cover: None,
+            compact_cover: None,
         }
     }
 
-    pub fn with_cover(mut self, cover: [u8; COVER_BYTE_LEN]) -> Self {
+    pub fn with_covers(
+        mut self,
+        cover: [u8; COVER_BYTE_LEN],
+        compact_cover: [u8; COMPACT_COVER_BYTE_LEN],
+    ) -> Self {
         self.cover = Some(cover);
+        self.compact_cover = Some(compact_cover);
         self
     }
 
@@ -43,6 +54,7 @@ impl BookBuilder {
         writer.bytes(self.title.as_bytes());
         writer.bytes(self.author.as_bytes());
         writer.bytes(self.cover.as_ref().unwrap_or(DEFAULT_COVER));
+        writer.bytes(self.compact_cover.as_ref().unwrap_or(DEFAULT_COMPACT_COVER));
 
         writer.indexed(&self.pages, |writer, page| {
             writer.bytes(page.as_bytes());

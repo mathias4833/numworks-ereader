@@ -1,7 +1,7 @@
 use crate::ui::components::text_block::TextBlock;
 use crate::ui::layout::Stack;
 use crate::ui::theme;
-use book_format::{Book, COVER_HEIGHT, COVER_WIDTH};
+use book_format::{Book, COMPACT_COVER_HEIGHT, COMPACT_COVER_WIDTH, COVER_HEIGHT, COVER_WIDTH};
 use core::fmt::Write;
 use embedded_graphics::Drawable;
 use embedded_graphics::geometry::{Point, Size};
@@ -25,10 +25,12 @@ pub struct BookCard<'a> {
     progress: usize,
     label: Option<&'a str>,
     selected: bool,
+    compact: bool,
 }
 
 impl<'a> BookCard<'a> {
     pub const HEIGHT: u32 = 101;
+    pub const COMPACT_HEIGHT: u32 = 66;
 
     pub const fn new(area: Rectangle, book: &'a Book<'a>, progress: usize) -> Self {
         Self {
@@ -37,7 +39,14 @@ impl<'a> BookCard<'a> {
             progress,
             label: None,
             selected: false,
+            compact: false,
         }
+    }
+
+    pub const fn compact(area: Rectangle, book: &'a Book<'a>, progress: usize) -> Self {
+        let mut card = Self::new(area, book, progress);
+        card.compact = true;
+        card
     }
 
     pub const fn with_label(mut self, label: &'a str) -> Self {
@@ -63,16 +72,28 @@ impl<'a> Drawable for BookCard<'a> {
             .into_styled(theme::surface(self.selected))
             .draw(display)?;
 
-        let cover = Rectangle::new(
-            self.area.top_left + Point::new(10, 5),
-            Size::new(COVER_WIDTH as u32, COVER_HEIGHT as u32),
-        );
-        let pixels = self
-            .book
-            .cover()
+        let (cover_offset, cover_size, cover_to_text) = if self.compact {
+            (
+                Point::new(8, 3),
+                Size::new(COMPACT_COVER_WIDTH as u32, COMPACT_COVER_HEIGHT as u32),
+                8,
+            )
+        } else {
+            (
+                Point::new(10, 5),
+                Size::new(COVER_WIDTH as u32, COVER_HEIGHT as u32),
+                COVER_TO_TEXT,
+            )
+        };
+        let cover = Rectangle::new(self.area.top_left + cover_offset, cover_size);
+        let source = if self.compact {
+            self.book.compact_cover()
+        } else {
+            self.book.cover()
+        };
+        let pixels = source
             .chunks_exact(2)
             .map(|bytes| Rgb565::from(RawU16::new(u16::from_le_bytes([bytes[0], bytes[1]]))));
-
         display.fill_contiguous(&cover, pixels)?;
 
         let chevron_position = Point::new(
@@ -80,7 +101,7 @@ impl<'a> Drawable for BookCard<'a> {
             self.area.top_left.y + (self.area.size.height as i32 - 18) / 2,
         );
         let text_origin = Point::new(
-            cover.top_left.x + cover.size.width as i32 + COVER_TO_TEXT,
+            cover.top_left.x + cover.size.width as i32 + cover_to_text,
             self.area.top_left.y,
         );
         let text_width = (chevron_position.x - TEXT_TO_CHEVRON - text_origin.x) as u32;
