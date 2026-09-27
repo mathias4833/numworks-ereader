@@ -50,12 +50,32 @@ impl Menu {
         self.selected != previous
     }
 
-    pub const fn view(&self, layout: Stack, item_size: u32) -> MenuView<'_> {
-        MenuView {
-            menu: self,
-            layout,
-            item_size,
+    pub fn draw_with<D, F>(
+        &self,
+        display: &mut D,
+        mut layout: Stack,
+        item_size: u32,
+        mut draw_item: F,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = Rgb565>,
+        F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
+    {
+        let capacity = layout.capacity(item_size);
+        let first_visible = self.selected.saturating_sub(capacity.saturating_sub(1));
+
+        for index in (first_visible..self.item_count).take(capacity) {
+            draw_item(
+                display,
+                MenuSlot {
+                    index,
+                    area: layout.next(item_size),
+                    selected: index == self.selected,
+                },
+            )?;
         }
+
+        Ok(())
     }
 }
 
@@ -63,46 +83,6 @@ pub struct MenuSlot {
     pub index: usize,
     pub area: Rectangle,
     pub selected: bool,
-}
-
-pub struct MenuView<'a> {
-    menu: &'a Menu,
-    layout: Stack,
-    item_size: u32,
-}
-
-impl MenuView<'_> {
-    fn first_visible(&self) -> usize {
-        let capacity = self.layout.capacity(self.item_size).max(1);
-        self.menu.selected.saturating_sub(capacity - 1)
-    }
-}
-
-impl MenuView<'_> {
-    pub fn draw_with<D, F>(&self, display: &mut D, mut draw_item: F) -> Result<(), D::Error>
-    where
-        D: DrawTarget<Color = Rgb565>,
-        F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
-    {
-        let first_visible = self.first_visible();
-        let capacity = self.layout.capacity(self.item_size);
-        let mut layout = self.layout;
-
-        for index in (first_visible..self.menu.item_count).take(capacity) {
-            let area = layout.next(self.item_size);
-
-            draw_item(
-                display,
-                MenuSlot {
-                    index,
-                    area,
-                    selected: index == self.menu.selected,
-                },
-            )?;
-        }
-
-        Ok(())
-    }
 }
 
 #[derive(Clone, Copy)]

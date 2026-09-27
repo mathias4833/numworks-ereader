@@ -42,9 +42,11 @@ impl Screen for LibraryScreen {
             .draw(display)?;
 
         let layout = Stack::vertical(frame.content(), 4);
-        self.menu
-            .view(layout, BookCard::COMPACT_HEIGHT)
-            .draw_with(display, |display, slot| {
+        self.menu.draw_with(
+            display,
+            layout,
+            BookCard::COMPACT_HEIGHT,
+            |display, slot| {
                 let Ok(Some(book)) = ctx.library.book(slot.index) else {
                     return Ok(());
                 };
@@ -56,7 +58,8 @@ impl Screen for LibraryScreen {
                 BookCard::compact(slot.area, &book, progress)
                     .selected(slot.selected)
                     .draw(display)
-            })?;
+            },
+        )?;
 
         Ok(())
     }
