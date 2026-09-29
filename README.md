@@ -66,8 +66,9 @@ The calculator build targets `thumbv7em-none-eabihf` and runs without `std`.
 Epsilon external apps interact with the calculator through EADK, a small C API. The wrappers in [`src/eadk/`](src/eadk/)
 expose the display, input, timing, battery state and external data to the rest of the application.
 
-There is no heap allocator on the calculator side. Reading state and temporary UI data use fixed-capacity `heapless`
-containers, while the book data is borrowed directly from the external data provided by Epsilon.
+The calculator build doesn't use dynamic allocation. Reading state and temporary UI data use fixed-capacity `heapless`
+containers, while the book data is borrowed directly from the external data provided by Epsilon, and the render buffer
+uses a fixed-size static allocation.
 
 The simulator runs the same application code as a native build with `std` enabled. A few platform details differ between
 the two. Battery information is one example: the EADK battery functions work in the simulator but aren't available on
@@ -79,9 +80,12 @@ The UI uses `embedded-graphics`, with `u8g2-fonts` for text and `embedded-iconoi
 
 [`EadkDisplay`](src/ui/display.rs) implements `DrawTarget<Color = Rgb565>` on top of EADK's display API.
 
-There is no application framebuffer. Pixels are written directly to the 320 x 240 display. Solid rectangles use EADK's
-uniform fill operation, while contiguous pixel data is buffered one row at a time and sent with
-`eadk_display_push_rect`. Book covers use this path instead of drawing every pixel individually.
+A full-screen RGB565 framebuffer would take about 150 KB, which is too large for the memory available to an external app
+on the calculator. Full redraws are therefore sent directly to the 320 x 240 display, while smaller UI changes are
+rendered into a fixed-size buffer before being transferred with a single `eadk_display_push_rect` call. Screens only
+invalidate the region that changed, and multiple invalidations are merged into one enclosing rectangle (which works well
+here because UI updates only affect neighboring elements, such as the old and new menu selections). If that rectangle is
+too large for the buffer, rendering falls back to a full redraw.
 
 The app waits for vertical blanking before drawing a screen to reduce visible tearing.
 
@@ -111,16 +115,13 @@ but it isn't exposed to external apps through the public EADK API
 EPUB formatting is mostly flattened to plain text during conversion. Headings, bold and italic text, and footnotes are
 not represented properly yet ([#4](https://github.com/mathias4833/numworks-ereader/issues/4)).
 
-Screen updates aren't partial yet. Changing a menu selection or updating the battery indicator can redraw much more of
-the display than necessary ([#3](https://github.com/mathias4833/numworks-ereader/issues/3)).
-
 ## Repository layout
 
 ```text
 src/
   eadk/             EADK and platform-specific code
   screens/          home, library and reader screens
-  ui/               display adapter, layout and widgets
+  ui/               display, invalidation, render buffer, layout and widgets
 
 book-format/        shared NWBK/NWLIB format
 book-converter/     EPUB conversion and pagination

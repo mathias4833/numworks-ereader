@@ -8,13 +8,14 @@ use crate::screens::{ActiveScreen, Route, Screen, ScreenContext, ScreenResult, U
 use crate::ui::components::battery::BatteryState;
 use crate::ui::display::EadkDisplay;
 use crate::ui::invalidation::Invalidation;
+use crate::ui::render_buffer::RenderBuffer;
 use book_format::Library;
-use embedded_graphics::draw_target::DrawTargetExt;
 
 const EVENT_TIMEOUT_MS: i32 = 1000;
 
 pub struct App {
     display: EadkDisplay,
+    render_buffer: RenderBuffer,
     screen: ActiveScreen,
     library: Library<'static>,
     battery: BatteryState,
@@ -35,6 +36,7 @@ impl App {
 
         Self {
             display: EadkDisplay::new(),
+            render_buffer: RenderBuffer::new(),
             screen: ActiveScreen::Home(HomeScreen::new()),
             library,
             battery: BatteryState::new(),
@@ -95,11 +97,6 @@ impl App {
             return;
         }
 
-        // The display refreshes at 40 Hz (~25 ms/frame). Since drawing is done
-        // directly to the screen, wait for VBlank to reduce visible tearing.
-        // See: https://github.com/numworks/epsilon/issues/2401
-        eadk::display::wait_for_vblank();
-
         let ctx = ScreenContext {
             battery: &self.battery,
             reading: &self.reading,
@@ -108,18 +105,25 @@ impl App {
 
         match invalidation {
             Invalidation::None => {}
+
             Invalidation::Full => {
+                // The display refreshes at 40 Hz (~25 ms/frame). Since drawing is done
+                // directly to the screen, wait for VBlank to reduce visible tearing.
+                // See: https://github.com/numworks/epsilon/issues/2401
+                eadk::display::wait_for_vblank();
                 let _ = self.screen.draw(&mut self.display, ctx);
             }
-            Invalidation::Partial { first, second } => {
-                {
-                    let mut display = self.display.clipped(&first);
-                    let _ = self.screen.draw(&mut display, ctx);
-                }
 
-                if let Some(area) = second {
-                    let mut display = self.display.clipped(&area);
-                    let _ = self.screen.draw(&mut display, ctx);
+            Invalidation::Partial(area) => {
+                if self.render_buffer.can_hold(area) {
+                    self.render_buffer.set_area(area);
+                    let _ = self.screen.draw(&mut self.render_buffer, ctx);
+
+                    eadk::display::wait_for_vblank();
+                    eadk::display::push_rect(area, self.render_buffer.pixels());
+                } else {
+                    eadk::display::wait_for_vblank();
+                    let _ = self.screen.draw(&mut self.display, ctx);
                 }
             }
         }

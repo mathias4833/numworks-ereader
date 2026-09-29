@@ -51,7 +51,15 @@ impl Screen for ReaderScreen {
             draw_reader_text(display, frame.content(), &page)?;
         }
 
-        draw_bottom_bar(display, frame.bottom_bar(), page_index, book.page_count())?;
+        let progress = ctx.reading.progress_percent(book.page_count());
+
+        draw_bottom_bar(
+            display,
+            frame.bottom_bar(),
+            page_index,
+            book.page_count(),
+            progress,
+        )?;
 
         Ok(())
     }
@@ -63,7 +71,7 @@ impl Screen for ReaderScreen {
                     ctx.invalidation.full();
                 }
                 ScreenResult::None
-            },
+            }
             Event::Right | Event::Down | Event::Ok => {
                 let Ok(Some(book)) = ctx.library.book(ctx.reading.current_book()) else {
                     return ScreenResult::None;
@@ -109,6 +117,7 @@ fn draw_bottom_bar<D>(
     area: Rectangle,
     page_index: usize,
     page_count: usize,
+    progress: usize,
 ) -> Result<(), D::Error>
 where
     D: DrawTarget<Color = Rgb565>,
@@ -117,11 +126,7 @@ where
     let _ = write!(page_label, "Page {} / {}", page_index + 1, page_count);
 
     let mut progress_label = String::<5>::new();
-    let _ = write!(
-        progress_label,
-        "{}%",
-        progress_percent(page_index, page_count)
-    );
+    let _ = write!(progress_label, "{}%", progress);
 
     area.into_styled(PrimitiveStyle::with_fill(theme::BACKGROUND))
         .draw(display)?;
@@ -160,12 +165,4 @@ where
     .draw(display)?;
 
     Ok(())
-}
-
-fn progress_percent(page_index: usize, page_count: usize) -> usize {
-    if page_count == 0 {
-        return 0;
-    }
-
-    ((page_index + 1) * 100) / page_count
 }

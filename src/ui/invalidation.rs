@@ -1,3 +1,4 @@
+use crate::ui::layout::enclosing_rect;
 use embedded_graphics::primitives::Rectangle;
 
 #[derive(Clone, Copy, Default)]
@@ -5,27 +6,15 @@ pub enum Invalidation {
     #[default]
     None,
     Full,
-    Partial {
-        first: Rectangle,
-        second: Option<Rectangle>,
-    },
+    Partial(Rectangle),
 }
 
 impl Invalidation {
     pub fn invalidate(&mut self, area: Rectangle) {
         *self = match *self {
-            Self::None => Self::Partial {
-                first: area,
-                second: None,
-            },
-            Self::Partial {
-                first,
-                second: None,
-            } => Self::Partial {
-                first,
-                second: Some(area),
-            },
-            Self::Partial { .. } | Self::Full => Self::Full,
+            Self::None => Self::Partial(area),
+            Self::Partial(current) => Self::Partial(enclosing_rect(current, area)),
+            Self::Full => Self::Full,
         };
     }
 
