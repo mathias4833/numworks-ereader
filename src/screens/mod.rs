@@ -1,6 +1,7 @@
 use crate::eadk::event::Event;
 use crate::reading::ReadingState;
 use crate::ui::components::battery::BatteryState;
+use crate::ui::invalidation::Invalidation;
 use book_format::Library;
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::DrawTarget;
@@ -23,21 +24,16 @@ pub enum Route {
 
 pub enum ScreenResult {
     None,
-    Redraw,
     Navigate(Route),
-}
-
-impl ScreenResult {
-    pub const fn redraw_if(changed: bool) -> Self {
-        if changed { Self::Redraw } else { Self::None }
-    }
 }
 
 pub struct UpdateContext<'a> {
     pub library: &'a Library<'static>,
     pub reading: &'a mut ReadingState,
+    pub invalidation: &'a mut Invalidation,
 }
 
+#[derive(Clone, Copy)]
 pub struct ScreenContext<'a> {
     pub battery: &'a BatteryState,
     pub reading: &'a ReadingState,

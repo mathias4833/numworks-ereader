@@ -58,13 +58,21 @@ impl Screen for ReaderScreen {
 
     fn on_event(&mut self, event: Event, ctx: &mut UpdateContext<'_>) -> ScreenResult {
         match event {
-            Event::Left | Event::Up => ScreenResult::redraw_if(ctx.reading.previous_page()),
+            Event::Left | Event::Up => {
+                if ctx.reading.previous_page() {
+                    ctx.invalidation.full();
+                }
+                ScreenResult::None
+            },
             Event::Right | Event::Down | Event::Ok => {
                 let Ok(Some(book)) = ctx.library.book(ctx.reading.current_book()) else {
                     return ScreenResult::None;
                 };
 
-                ScreenResult::redraw_if(ctx.reading.next_page(book.page_count()))
+                if ctx.reading.next_page(book.page_count()) {
+                    ctx.invalidation.full();
+                }
+                ScreenResult::None
             }
             Event::Back => ScreenResult::Navigate(Route::Home),
             _ => ScreenResult::None,

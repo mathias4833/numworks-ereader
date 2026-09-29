@@ -26,19 +26,4 @@ impl Stack {
         self.offset = self.offset.saturating_add(size).saturating_add(self.gap);
         rect
     }
-
-    pub const fn capacity(&self, item_size: u32) -> usize {
-        if item_size == 0 {
-            return 0;
-        }
-
-        let step = item_size.saturating_add(self.gap);
-
-        if step == 0 {
-            return 0;
-        }
-
-        let total = self.area.size.height.saturating_add(self.gap);
-        total.saturating_div(step) as usize
-    }
 }

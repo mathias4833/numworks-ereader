@@ -1,4 +1,4 @@
-use crate::ui::layout::{Stack, centered_line_y};
+use crate::ui::layout::centered_line_y;
 use crate::ui::theme;
 use embedded_graphics::Drawable;
 use embedded_graphics::draw_target::DrawTarget;
@@ -9,81 +9,6 @@ use embedded_graphics::primitives::{Rectangle, RoundedRectangle};
 use embedded_graphics::text::renderer::TextRenderer;
 use embedded_graphics::text::{Alignment, Baseline, Text, TextStyleBuilder};
 use embedded_iconoir::prelude::{IconoirNewIcon, icons};
-
-pub struct Menu {
-    item_count: usize,
-    selected: usize,
-}
-
-impl Menu {
-    pub const fn new(item_count: usize) -> Self {
-        Self {
-            item_count,
-            selected: 0,
-        }
-    }
-
-    pub const fn with_selected(item_count: usize, selected: usize) -> Self {
-        Self {
-            item_count,
-            selected,
-        }
-    }
-
-    pub const fn selected(&self) -> usize {
-        self.selected
-    }
-
-    pub fn move_up(&mut self) -> bool {
-        let previous = self.selected;
-        self.selected = self.selected.saturating_sub(1);
-        self.selected != previous
-    }
-
-    pub fn move_down(&mut self) -> bool {
-        if self.item_count == 0 {
-            return false;
-        }
-
-        let previous = self.selected;
-        self.selected = (self.selected + 1).min(self.item_count - 1);
-        self.selected != previous
-    }
-
-    pub fn draw_with<D, F>(
-        &self,
-        display: &mut D,
-        mut layout: Stack,
-        item_size: u32,
-        mut draw_item: F,
-    ) -> Result<(), D::Error>
-    where
-        D: DrawTarget<Color = Rgb565>,
-        F: FnMut(&mut D, MenuSlot) -> Result<(), D::Error>,
-    {
-        let capacity = layout.capacity(item_size);
-        let first_visible = self.selected.saturating_sub(capacity.saturating_sub(1));
-
-        for index in (first_visible..self.item_count).take(capacity) {
-            draw_item(
-                display,
-                MenuSlot {
-                    index,
-                    area: layout.next(item_size),
-                    selected: index == self.selected,
-                },
-            )?;
-        }
-
-        Ok(())
-    }
-}
-
-pub struct MenuSlot {
-    pub index: usize,
-    pub area: Rectangle,
-    pub selected: bool,
-}
 
 #[derive(Clone, Copy)]
 pub enum MenuIcon {

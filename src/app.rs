@@ -7,7 +7,9 @@ use crate::screens::reader::ReaderScreen;
 use crate::screens::{ActiveScreen, Route, Screen, ScreenContext, ScreenResult, UpdateContext};
 use crate::ui::components::battery::BatteryState;
 use crate::ui::display::EadkDisplay;
+use crate::ui::invalidation::Invalidation;
 use book_format::Library;
+use embedded_graphics::draw_target::DrawTargetExt;
 
 const EVENT_TIMEOUT_MS: i32 = 1000;
 
@@ -43,14 +45,16 @@ impl App {
     pub fn run(&mut self) -> ! {
         self.battery
             .update_if_needed(eadk::timing::millis(), Event::None);
-        self.draw();
+        self.draw(Invalidation::Full);
 
         loop {
             let event = eadk::event::wait_event(EVENT_TIMEOUT_MS);
             let now = eadk::timing::millis();
+            let mut invalidation = Invalidation::None;
 
-            let battery_changed = self.battery.update_if_needed(now, event);
-            let system_redraw = matches!(event, Event::BatteryCharging | Event::USBPlug);
+            if self.battery.update_if_needed(now, event) {
+                invalidation.full();
+            }
 
             let result = match event {
                 Event::None | Event::Idle | Event::BatteryCharging | Event::USBPlug => {
@@ -60,22 +64,18 @@ impl App {
                     let mut ctx = UpdateContext {
                         library: &self.library,
                         reading: &mut self.reading,
+                        invalidation: &mut invalidation,
                     };
                     self.screen.on_event(event, &mut ctx)
                 }
             };
-            let needs_redraw = match result {
-                ScreenResult::None => false,
-                ScreenResult::Redraw => true,
-                ScreenResult::Navigate(route) => {
-                    self.navigate(route);
-                    true
-                }
-            };
 
-            if system_redraw || battery_changed || needs_redraw {
-                self.draw();
+            if let ScreenResult::Navigate(route) = result {
+                self.navigate(route);
+                invalidation.full();
             }
+
+            self.draw(invalidation);
         }
     }
 
@@ -90,7 +90,11 @@ impl App {
         };
     }
 
-    fn draw(&mut self) {
+    fn draw(&mut self, invalidation: Invalidation) {
+        if matches!(invalidation, Invalidation::None) {
+            return;
+        }
+
         // The display refreshes at 40 Hz (~25 ms/frame). Since drawing is done
         // directly to the screen, wait for VBlank to reduce visible tearing.
         // See: https://github.com/numworks/epsilon/issues/2401
@@ -102,6 +106,22 @@ impl App {
             library: &self.library,
         };
 
-        let _ = self.screen.draw(&mut self.display, ctx);
+        match invalidation {
+            Invalidation::None => {}
+            Invalidation::Full => {
+                let _ = self.screen.draw(&mut self.display, ctx);
+            }
+            Invalidation::Partial { first, second } => {
+                {
+                    let mut display = self.display.clipped(&first);
+                    let _ = self.screen.draw(&mut display, ctx);
+                }
+
+                if let Some(area) = second {
+                    let mut display = self.display.clipped(&area);
+                    let _ = self.screen.draw(&mut display, ctx);
+                }
+            }
+        }
     }
 }
