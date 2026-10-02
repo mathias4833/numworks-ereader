@@ -57,6 +57,14 @@ This builds the same library, cross-compiles the application and installs both o
 The EPUB arguments describe the complete library for that run: each invocation replaces the previously generated
 library.
 
+## Testing
+
+Run the host tests with:
+
+```sh
+cargo test --workspace
+```
+
 ## Implementation notes
 
 ### EADK and `no_std`

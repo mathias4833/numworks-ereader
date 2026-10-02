@@ -11,6 +11,12 @@ edition = "2024"
 [lib]
 crate-type = ["rlib"]
 
+[[bin]]
+name = "numworks-ereader"
+path = "src/main.rs"
+test = false
+bench = false
+
 [dependencies]
 book-format = { path = "book-format" }
 num_enum = { version = "0.7.6", default-features = false }

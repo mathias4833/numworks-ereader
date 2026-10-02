@@ -109,3 +109,50 @@ fn convert_cover<const N: usize>(
 
     cover
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use book_format::Book;
+
+    #[test]
+    fn pagination_wraps_words_and_normalizes_paragraphs() {
+        let converter = Converter::new(5, 3);
+        for (text, expected) in [
+            ("one two three", vec!["one\ntwo\nthree"]),
+            ("\n  café\n\n\nété  \n\n", vec!["cafe\n\nete"]),
+            (" \n\t\n", vec![]),
+        ] {
+            assert_eq!(converter.paginate(text), expected, "input: {text:?}");
+        }
+    }
+
+    #[test]
+    fn pagination_respects_exact_line_and_page_boundaries() {
+        let converter = Converter::new(crate::CHARS_PER_LINE, crate::LINES_PER_PAGE);
+        let line = "a".repeat(39);
+        let full_page = vec![line.as_str(); 13].join("\n");
+        assert_eq!(converter.paginate(&full_page), [full_page.clone()]);
+        assert_eq!(
+            converter.paginate(&format!("{full_page}\nz")),
+            [full_page, "z".into()]
+        );
+    }
+
+    #[test]
+    fn conversion_starts_each_chapter_on_a_new_page() {
+        let epub = EpubBook {
+            title: "Été".into(),
+            author: "Zoë".into(),
+            chapters: vec!["First".into(), " \n".into(), "Second".into()],
+            cover: None,
+        };
+        let data = Converter::new(39, 13).convert(&epub).encode().unwrap();
+        let book = Book::parse(&data).unwrap();
+        assert_eq!(book.title(), "Ete");
+        assert_eq!(book.author(), "Zoe");
+        assert_eq!(book.page_count(), 2);
+        assert_eq!(book.page(0).unwrap().text(), "First");
+        assert_eq!(book.page(1).unwrap().text(), "Second");
+    }
+}

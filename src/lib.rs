@@ -11,7 +11,7 @@ mod ui;
 mod panic;
 
 // For the emulator
-#[cfg(not(target_os = "none"))]
+#[cfg(all(not(target_os = "none"), not(test)))]
 #[unsafe(no_mangle)]
 pub extern "C" fn main(_argc: i32, _argv: *const *const u8) -> i32 {
     use crate::app::App;
