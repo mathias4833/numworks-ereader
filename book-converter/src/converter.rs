@@ -70,12 +70,18 @@ impl Converter {
     fn wrap_paragraph(&self, paragraph: &str, lines: &mut Vec<String>) {
         let mut current_line = String::new();
 
-        for word in paragraph.split_whitespace() {
+        for mut word in paragraph.split_whitespace() {
             // If the line is empty, we don't need to add a space before the word
             let new_len = current_line.len() + usize::from(!current_line.is_empty()) + word.len();
-            if new_len > self.chars_per_line {
-                lines.push(current_line);
-                current_line = String::new();
+            if new_len > self.chars_per_line && !current_line.is_empty() {
+                lines.push(std::mem::take(&mut current_line));
+            }
+
+            // Bytes boundaries are safe because paginate() transliterates to ASCII first
+            while word.len() > self.chars_per_line {
+                let (line, rest) = word.split_at(self.chars_per_line);
+                lines.push(line.to_owned());
+                word = rest;
             }
 
             if !current_line.is_empty() {
@@ -137,6 +143,17 @@ mod tests {
             converter.paginate(&format!("{full_page}\nz")),
             [full_page, "z".into()]
         );
+    }
+
+    #[test]
+    fn long_words_are_split_without_empty_lines() {
+        let converter = Converter::new(5, 3);
+        for (text, expected) in [
+            ("abcdefghijk", vec!["abcde\nfghij\nk"]),
+            ("hi abcdefghij end", vec!["hi\nabcde\nfghij", "end"]),
+        ] {
+            assert_eq!(converter.paginate(text), expected, "input: {text:?}");
+        }
     }
 
     #[test]
