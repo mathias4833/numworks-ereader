@@ -15,12 +15,7 @@ pub struct ListSlot {
 }
 
 impl<const N: usize> List<N> {
-    pub fn new(
-        area: Rectangle,
-        slots: [Rectangle; N],
-        item_count: usize,
-        selected: usize,
-    ) -> Self {
+    pub fn new(area: Rectangle, slots: [Rectangle; N], item_count: usize, selected: usize) -> Self {
         Self {
             area,
             slots,
